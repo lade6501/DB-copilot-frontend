@@ -42,4 +42,6 @@ export interface QuerySession {
   steps: Step[];
   status: "running" | "completed" | "error";
   result?: Record<string, unknown>[];
+  rowCount?: number;
+  success: boolean;
 }

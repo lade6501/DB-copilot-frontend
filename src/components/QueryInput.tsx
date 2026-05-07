@@ -21,7 +21,9 @@ export function QueryInput({ onSubmit, loading, connected }: QueryInputProps) {
 
   const handleSubmit = () => {
     const trimmed = value.trim();
+    console.log("handleSubmit", { trimmed, loading });
     if (!trimmed || loading) return;
+    console.log("submitting", trimmed);
     onSubmit(trimmed);
     setShowSuggestions(false);
   };
@@ -37,6 +39,7 @@ export function QueryInput({ onSubmit, loading, connected }: QueryInputProps) {
     setValue(s);
     setShowSuggestions(false);
     textareaRef.current?.focus();
+    onSubmit(s);
   };
 
   return (

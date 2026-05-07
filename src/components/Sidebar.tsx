@@ -1,7 +1,7 @@
-import type { QueryHistory } from "../types";
+import type { QuerySession } from "../types";
 
 interface SidebarProps {
-  history: QueryHistory[];
+  history: QuerySession[];
   onSelect: (query: string) => void;
   onClear: () => void;
 }

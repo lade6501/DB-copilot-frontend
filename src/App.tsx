@@ -1,155 +1,180 @@
-import { useEffect } from "react";
-import { useWebSocket } from "./hooks/useWebSocket";
-import { useQueryHistory } from "./hooks/useQueryHistory";
+import { useEffect, useRef } from "react";
 import { QueryInput } from "./components/QueryInput";
 import { StepCard } from "./components/StepCard";
-import { ResultTable } from "./components/ResultTable";
-import { Sidebar } from "./components/Sidebar";
-import "./App.css";
+import { useWebSocket } from "./hooks/useWebSocket";
+import type { QuerySession } from "./types/index";
+import "./index.css";
+
+function ResultPanel({ session }: { session: QuerySession | null }) {
+  const result = session?.result;
+  const columns = result && result.length > 0 ? Object.keys(result[0]) : [];
+
+  return (
+    <aside className="result-panel">
+      <div className="result-panel__header">
+        <span className="result-panel__title">Result</span>
+        {result && (
+          <span className="result-panel__count">
+            {result.length} row{result.length !== 1 ? "s" : ""}
+          </span>
+        )}
+      </div>
+      {!result ? (
+        <div className="result-panel__empty">Run a query to see results</div>
+      ) : (
+        <div className="result-panel__scroll">
+          <table className="result-table">
+            <thead>
+              <tr>
+                {columns.map((c) => (
+                  <th key={c}>{c}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {result.map((row, i) => (
+                <tr key={i}>
+                  {columns.map((c) => (
+                    <td key={c} title={String(row[c] ?? "")}>
+                      {String(row[c] ?? "")}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </aside>
+  );
+}
+
+function Sidebar({
+  sessions,
+  activeSessionId,
+  onSelect,
+}: {
+  sessions: QuerySession[];
+  activeSessionId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <nav className="sidebar">
+      <span className="sidebar__label">History</span>
+      {sessions.length === 0 && (
+        <span className="sidebar__empty">No queries yet</span>
+      )}
+      {sessions.map((s) => (
+        <div
+          key={s.id}
+          className={`session-item ${s.id === activeSessionId ? "session-item--active" : ""}`}
+          onClick={() => onSelect(s.id)}
+        >
+          <div className="session-item__query">{s.query}</div>
+          <div className="session-item__meta">
+            <span
+              className={`session-item__dot session-item__dot--${s.status}`}
+            />
+            {s.timestamp.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+            &nbsp;·&nbsp;{s.steps.filter((st) => st.step !== "done").length}{" "}
+            steps
+          </div>
+        </div>
+      ))}
+    </nav>
+  );
+}
 
 export default function App() {
-  const { steps, loading, connected, error, sendQuery, reset } = useWebSocket();
-  const { history, addHistory, clearHistory } = useQueryHistory();
+  const {
+    sessions,
+    activeSessionId,
+    setActiveSessionId,
+    activeSession,
+    isConnecting,
+    sendQuery,
+  } = useWebSocket();
 
-  const executeStep = steps.find((s) => s.step === "execute" && s.result);
-  const result = executeStep?.result;
-  const executionTime = executeStep?.execution_time;
+  const stepsEndRef = useRef<HTMLDivElement>(null);
+  const inputBarRef = useRef<HTMLDivElement>(null);
+  const isRunning = activeSession?.status === "running" || isConnecting;
 
   useEffect(() => {
-    if (!loading && steps.length > 0) {
-      const lastQuery =
-        (steps.find((s) => s.step === "interpret")?.data?.query as string) ??
-        "";
-      const success = !steps.some((s) => s.status === "error");
-      addHistory(lastQuery, success, result?.length);
-    }
-  }, [loading, steps]);
+    if (!inputBarRef.current) return;
+    const ro = new ResizeObserver((entries) => {
+      const h = entries[0].borderBoxSize[0].blockSize;
+      inputBarRef.current?.parentElement?.style.setProperty(
+        "--input-bar-height",
+        `${h}px`,
+      );
+    });
+    ro.observe(inputBarRef.current);
+    return () => ro.disconnect();
+  }, []);
 
-  const handleQuery = (q: string) => {
-    reset();
-    sendQuery(q);
-  };
+  useEffect(() => {
+    stepsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [activeSession?.steps.length]);
 
-  const activeSteps = steps.filter((s) => s.step !== "done");
-  const hasResult = !!result;
+  const visibleSteps = (activeSession?.steps ?? []).filter(
+    (s) => s.step !== "done",
+  );
 
   return (
     <div className="app">
+      <header className="topbar">
+        <div className="topbar__logo">
+          <span className="topbar__logo-dot" />
+          DB Copilot
+        </div>
+        <div className="topbar__divider" />
+        <div className="topbar__status">
+          <span className="topbar__status-dot" />
+          connected · ws://localhost:8000
+        </div>
+      </header>
+
       <Sidebar
-        history={history}
-        onSelect={handleQuery}
-        onClear={clearHistory}
+        sessions={sessions}
+        activeSessionId={activeSessionId}
+        onSelect={setActiveSessionId}
       />
 
       <main className="main">
-        <div className="main__top">
-          <div className="main__heading">
-            <h1 className="main__title">Query your database</h1>
-            <p className="main__sub">
-              Natural language → SQL, live execution steps
-            </p>
-          </div>
+        {isRunning && <div className="running-bar" />}
+
+        <div className="main__steps" data-input-height="true">
+          {visibleSteps.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state__icon">⌥</div>
+              <div className="empty-state__title">
+                Ask your database anything
+              </div>
+              <div className="empty-state__sub">
+                Type a question below — we'll show you every step live
+              </div>
+            </div>
+          ) : (
+            visibleSteps.map((step, i) => (
+              <StepCard key={`${step.step}-${i}`} step={step} index={i} />
+            ))
+          )}
+          <div ref={stepsEndRef} />
         </div>
 
-        <QueryInput
-          onSubmit={handleQuery}
-          loading={loading}
-          connected={connected}
-        />
-
-        {error && (
-          <div className="error-banner">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle
-                cx="8"
-                cy="8"
-                r="7"
-                stroke="currentColor"
-                strokeWidth="1.3"
-              />
-              <path
-                d="M8 5v3.5"
-                stroke="currentColor"
-                strokeWidth="1.3"
-                strokeLinecap="round"
-              />
-              <circle cx="8" cy="11" r="0.7" fill="currentColor" />
-            </svg>
-            {error}
-          </div>
-        )}
-
-        {activeSteps.length > 0 && (
-          <section className="steps-section">
-            <div className="steps-header">
-              <span className="steps-title">Execution Pipeline</span>
-              {loading && (
-                <span className="steps-running">
-                  <span className="steps-running__dot" />
-                  Running
-                </span>
-              )}
-            </div>
-            <div className="steps-list">
-              {activeSteps.map((step, i) => (
-                <StepCard key={step.step} step={step} index={i} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {hasResult && (
-          <section className="result-section">
-            <div className="result-section__header">
-              <span className="result-section__title">Results</span>
-            </div>
-            <ResultTable result={result!} executionTime={executionTime} />
-          </section>
-        )}
-
-        {activeSteps.length === 0 && !loading && !error && (
-          <div className="empty-state">
-            <div className="empty-state__icon">
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                <rect
-                  x="4"
-                  y="4"
-                  width="32"
-                  height="32"
-                  rx="8"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeDasharray="4 3"
-                  opacity="0.25"
-                />
-                <path
-                  d="M14 20h12M20 14v12"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  opacity="0.4"
-                />
-              </svg>
-            </div>
-            <p className="empty-state__text">
-              Run a query to see live execution steps
-            </p>
-            <div className="empty-state__chips">
-              {["Get all users", "Top 10 orders", "Count by country"].map(
-                (s) => (
-                  <button
-                    key={s}
-                    className="empty-chip"
-                    onClick={() => handleQuery(s)}
-                  >
-                    {s}
-                  </button>
-                ),
-              )}
-            </div>
-          </div>
-        )}
+        <div className="input-bar" ref={inputBarRef}>
+          <QueryInput
+            onSubmit={sendQuery}
+            loading={isRunning}
+            connected={!isConnecting}
+          />
+        </div>
       </main>
+
+      <ResultPanel session={activeSession} />
     </div>
   );
 }

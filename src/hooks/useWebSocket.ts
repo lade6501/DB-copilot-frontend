@@ -1,94 +1,103 @@
 import { useState, useRef, useCallback } from "react";
-import type { Step } from "../types";
+import type { Step, QuerySession } from "../types/index";
 
 const WS_URL = "ws://localhost:8000/ws/query";
 
-interface UseWebSocketReturn {
-  steps: Step[];
-  loading: boolean;
-  connected: boolean;
-  error: string | null;
-  sendQuery: (query: string) => void;
-  reset: () => void;
-}
+type WS = WebSocket;
 
-export function useWebSocket(): UseWebSocketReturn {
-  const [steps, setSteps] = useState<Step[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [connected, setConnected] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
+export function useWebSocket() {
+  const [sessions, setSessions] = useState<QuerySession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const wsRef = useRef<WS | null>(null);
 
-  const reset = useCallback(() => {
-    setSteps([]);
-    setError(null);
-    setLoading(false);
-  }, []);
-
-  const sendQuery = useCallback(
-    (query: string) => {
-      reset();
-      setLoading(true);
-
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-
-      const ws = new WebSocket(WS_URL);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        setConnected(true);
-        ws.send(JSON.stringify({ query }));
-      };
-
-      ws.onmessage = (event: MessageEvent) => {
-        try {
-          const data: Step = JSON.parse(event.data as string);
-
-          if (data.step === "done") {
-            setLoading(false);
-            ws.close();
-            return;
-          }
-
-          setSteps((prev) => {
-            const existingIndex = prev.findIndex((s) => s.step === data.step);
-
-            const newStatus =
-              data.status ??
-              (data.step === "start" ? "completed" : "in_progress");
-
-            if (existingIndex !== -1) {
-              const updated = [...prev];
-              updated[existingIndex] = {
-                ...updated[existingIndex],
-                ...data,
-                status: newStatus,
-              };
-              return updated;
-            }
-
-            return [...prev, { ...data, status: newStatus }];
-          });
-        } catch {
-          setError("Failed to parse server response");
-        }
-      };
-
-      ws.onerror = () => {
-        setError("WebSocket connection failed. Is the server running?");
-        setLoading(false);
-        setConnected(false);
-      };
-
-      ws.onclose = () => {
-        setConnected(false);
-        setLoading(false);
-      };
-    },
-    [reset],
+  const getActiveSession = useCallback(
+    () => sessions.find((s) => s.id === activeSessionId) ?? null,
+    [sessions, activeSessionId],
   );
 
-  return { steps, loading, connected, error, sendQuery, reset };
+  const sendQuery = useCallback((query: string) => {
+    const sessionId = `session-${Date.now()}`;
+    const newSession: QuerySession = {
+      id: sessionId,
+      query,
+      timestamp: new Date(),
+      steps: [],
+      status: "running",
+    };
+
+    setSessions((prev) => [newSession, ...prev]);
+    setActiveSessionId(sessionId);
+
+    if (wsRef.current) wsRef.current.close();
+
+    setIsConnecting(true);
+    const ws: WS = new WebSocket(WS_URL);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      setIsConnecting(false);
+      ws.send(JSON.stringify({ query }));
+    };
+
+    ws.onerror = () => {
+      setIsConnecting(false);
+      setSessions((prev) =>
+        prev.map((s) => (s.id === sessionId ? { ...s, status: "error" } : s)),
+      );
+    };
+
+    ws.onmessage = (event: MessageEvent) => {
+      try {
+        const step: Step = JSON.parse(event.data as string);
+
+        setSessions((prev) =>
+          prev.map((s) => {
+            if (s.id !== sessionId) return s;
+            const updatedSteps = [...s.steps];
+            const idx = updatedSteps.findIndex((st) => st.step === step.step);
+            if (idx >= 0) {
+              updatedSteps[idx] = {
+                ...updatedSteps[idx],
+                ...step,
+                status: "completed",
+              };
+            } else {
+              updatedSteps.push({
+                ...step,
+                status: step.step === "done" ? "completed" : "completed",
+              });
+            }
+            const result = step.step === "execute" ? step.result : s.result;
+            return {
+              ...s,
+              steps: updatedSteps,
+              result,
+              status:
+                step.step === "done"
+                  ? "completed"
+                  : step.step === "error"
+                    ? "error"
+                    : "running",
+            };
+          }),
+        );
+
+        if (step.step === "done" || step.step === "error") ws.close();
+      } catch {}
+    };
+
+    ws.onclose = () => {
+      setIsConnecting(false);
+    };
+  }, []);
+
+  return {
+    sessions,
+    activeSessionId,
+    setActiveSessionId: (id: string) => setActiveSessionId(id),
+    activeSession: getActiveSession(),
+    isConnecting,
+    sendQuery,
+  };
 }

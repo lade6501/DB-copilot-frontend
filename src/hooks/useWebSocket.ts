@@ -24,6 +24,7 @@ export function useWebSocket() {
       timestamp: new Date(),
       steps: [],
       status: "running",
+      success: false,
     };
 
     setSessions((prev) => [newSession, ...prev]);

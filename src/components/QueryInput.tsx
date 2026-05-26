@@ -5,7 +5,6 @@ const SUGGESTIONS = [
   "Show top 10 orders by amount",
   "Count active users by country",
   "Find products with low stock",
-  "List recent signups from last 7 days",
 ];
 
 interface QueryInputProps {
@@ -21,11 +20,18 @@ export function QueryInput({ onSubmit, loading, connected }: QueryInputProps) {
 
   const handleSubmit = () => {
     const trimmed = value.trim();
-    console.log("handleSubmit", { trimmed, loading });
     if (!trimmed || loading) return;
-    console.log("submitting", trimmed);
-    onSubmit(trimmed);
+
+    if (textareaRef.current) {
+      textareaRef.current.value = "";
+    }
+
+    setValue("");
     setShowSuggestions(false);
+
+    requestAnimationFrame(() => {
+      onSubmit(trimmed);
+    });
   };
 
   const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -36,63 +42,68 @@ export function QueryInput({ onSubmit, loading, connected }: QueryInputProps) {
   };
 
   const handleSuggestion = (s: string) => {
-    setValue(s);
+    setValue("");
     setShowSuggestions(false);
-    textareaRef.current?.focus();
-    onSubmit(s);
+    if (textareaRef.current) textareaRef.current.value = "";
+
+    requestAnimationFrame(() => {
+      onSubmit(s);
+    });
   };
 
   return (
-    <div className="query-input-wrap">
-      <div className={`query-box ${loading ? "query-box--loading" : ""}`}>
-        <div className="query-box__inner">
-          <span className="query-box__prompt">&gt;_</span>
+    <div className="terminal-input-wrap">
+      <div className="terminal-input-header">
+        <div className="terminal-window-controls">
+          <span className="tw-dot tw-dot--close" />
+          <span className="tw-dot tw-dot--minimize" />
+          <span className="tw-dot tw-dot--expand" />
+        </div>
+        <span className="terminal-input-title">db-copilot — zsh</span>
+      </div>
+
+      <div className="terminal-input-body">
+        <div className="terminal-prompt">
+          <span className="prompt-user">user@db</span>
+          <span className="prompt-colon">:</span>
+          <span className="prompt-path">~/query</span>
+          <span className="prompt-char">$</span>
+        </div>
+
+        <div className="terminal-textarea-wrapper">
           <textarea
             ref={textareaRef}
-            className="query-box__textarea"
+            className="terminal-textarea"
             value={value}
             onChange={(e) => {
               setValue(e.target.value);
               if (e.target.value.length > 0) setShowSuggestions(false);
             }}
             onFocus={() => value.length === 0 && setShowSuggestions(true)}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             onKeyDown={handleKey}
-            placeholder="Ask anything about your database..."
+            placeholder="Type a natural language query or raw SQL..."
             rows={1}
             disabled={loading}
           />
+          <button
+            className={`terminal-run-btn ${loading ? "terminal-run-btn--loading" : ""}`}
+            onClick={handleSubmit}
+            disabled={!value.trim() || loading}
+          >
+            {loading ? <span className="spinner spinner--sm" /> : "↵ RUN"}
+          </button>
         </div>
-        <button
-          className={`query-btn ${loading ? "query-btn--loading" : ""}`}
-          onClick={handleSubmit}
-          disabled={!value.trim() || loading}
-        >
-          {loading ? (
-            <span className="query-btn__spinner" />
-          ) : (
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M3 8h10M9 4l4 4-4 4"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          )}
-          <span>{loading ? "Running" : "Run"}</span>
-        </button>
       </div>
 
       {showSuggestions && (
-        <div className="suggestions">
-          <span className="suggestions__label">Try asking</span>
-          <div className="suggestions__list">
+        <div className="terminal-suggestions">
+          <span className="terminal-suggestions-label">History:</span>
+          <div className="terminal-suggestions-list">
             {SUGGESTIONS.map((s) => (
               <button
                 key={s}
-                className="suggestion-chip"
+                className="terminal-suggestion-chip"
                 onMouseDown={() => handleSuggestion(s)}
               >
                 {s}
@@ -102,14 +113,16 @@ export function QueryInput({ onSubmit, loading, connected }: QueryInputProps) {
         </div>
       )}
 
-      <div className="query-status">
-        <span
-          className={`status-dot ${connected ? "status-dot--on" : "status-dot--off"}`}
-        />
-        <span className="status-label">
-          {connected ? "Connected" : "Disconnected"} · ws://localhost:8000
-        </span>
-        <span className="status-hint">⏎ to run · Shift+⏎ for newline</span>
+      <div className="terminal-input-footer">
+        <div className="terminal-status">
+          <span
+            className={`status-dot ${connected ? "status-dot--on" : "status-dot--off"}`}
+          />
+          <span>
+            {connected ? "Gateway Connected on :8000" : "Connection Refused"}
+          </span>
+        </div>
+        <span className="terminal-hint">Shift + ↵ for newline</span>
       </div>
     </div>
   );

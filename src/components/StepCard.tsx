@@ -1,57 +1,58 @@
-import React from "react";
+import React, { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import type { Step, SummaryData } from "../types/index";
 
 const STEP_META: Record<
   string,
   { label: string; icon: string; color: string; description: string }
 > = {
+  start: {
+    label: "Session Initiated",
+    icon: "🚀",
+    color: "#64748b",
+    description: "Handshaking with real-time database agent",
+  },
   interpret: {
-    label: "Interpreting Query",
+    label: "Interpreting Intent",
     icon: "🔍",
     color: "var(--step-interpret)",
-    description: "Parsing natural language intent",
+    description: "Parsing natural language query token trees",
   },
   plan: {
-    label: "Planning Execution",
-    icon: "🗺",
+    label: "Planning Execution Path",
+    icon: "🗺️",
     color: "var(--step-plan)",
-    description: "Mapping query to schema",
+    description: "Mapping logical constraints to schema indices",
   },
   generate_query: {
-    label: "Generating SQL",
-    icon: "⚙",
+    label: "Generating SQL Syntax",
+    icon: "⚙️",
     color: "var(--step-generate)",
-    description: "Writing optimized SQL",
+    description: "Compiling optimized engine dialect code",
   },
   validate: {
-    label: "Validating Safety",
-    icon: "🛡",
+    label: "Validating Safety Constraints",
+    icon: "🛡️",
     color: "var(--step-validate)",
-    description: "Running safety & syntax checks",
+    description: "Evaluating read-isolation & syntax security checks",
   },
   execute: {
-    label: "Executing Query",
+    label: "Executing Relational Query",
     icon: "⚡",
     color: "var(--step-execute)",
-    description: "Running on database",
+    description: "Streaming active transactional blocks",
   },
   summary: {
-    label: "Summary",
+    label: "Run Summary Matrix",
     icon: "✦",
     color: "var(--step-summary)",
-    description: "Overview of this query run",
-  },
-  done: {
-    label: "Done",
-    icon: "✓",
-    color: "var(--step-done)",
-    description: "Query complete",
+    description: "Performance benchmarks and record outputs",
   },
   error: {
-    label: "Error",
+    label: "Pipeline Exception",
     icon: "✕",
     color: "var(--step-error)",
-    description: "Something went wrong",
+    description: "Operational failure during processing run",
   },
 };
 
@@ -60,34 +61,92 @@ interface StepCardProps {
   index: number;
 }
 
-function ExplanationBanner({ text }: { text: string }) {
+function CollapsibleExplanation({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = text.length > 150;
+
+  if (!isLong) {
+    return (
+      <div className="pipeline-explanation">
+        <div className="pipeline-explanation__text markdown-body">
+          <ReactMarkdown>{text}</ReactMarkdown>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="step-explanation">
-      <span className="step-explanation__icon">💬</span>
-      <p className="step-explanation__text">{text}</p>
+    <div className="pipeline-explanation">
+      <button
+        className="pipeline-explanation__toggle"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+            transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
+            transition: "transform 0.2s",
+          }}
+        >
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+        <span>
+          {expanded ? "Hide thinking process" : "Show thinking process"}
+        </span>
+      </button>
+      {expanded && (
+        <div className="pipeline-explanation__content">
+          <div className="pipeline-explanation__text markdown-body">
+            <ReactMarkdown>{text}</ReactMarkdown>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function SqlBlock({ sql, label = "SQL" }: { sql: string; label?: string }) {
+function SqlBlock({
+  sql,
+  label = "process.sql",
+}: {
+  sql: string;
+  label?: string;
+}) {
   return (
-    <div className="code-block">
-      <span className="code-block__label">{label}</span>
-      <pre>
-        <code>{sql}</code>
-      </pre>
+    <div className="terminal-window">
+      <div className="terminal-window__header">
+        <div className="terminal-window-controls">
+          <span className="tw-dot tw-dot--close" />
+          <span className="tw-dot tw-dot--minimize" />
+          <span className="tw-dot tw-dot--expand" />
+        </div>
+        <span className="terminal-window__title">{label}</span>
+        <span className="terminal-window__lang">SQL</span>
+      </div>
+      <div className="terminal-window__body">
+        <pre>
+          <code>{sql}</code>
+        </pre>
+      </div>
     </div>
   );
 }
 
 function DataChips({ data }: { data: Record<string, unknown> }) {
   return (
-    <div className="data-chips">
+    <div className="pipeline-chips">
       {Object.entries(data).map(([k, v]) => (
-        <div key={k} className="data-chip">
-          <span className="data-chip__key">{k}</span>
-          <span className="data-chip__val">
-            {Array.isArray(v) ? v.join(", ") || "—" : JSON.stringify(v)}
+        <div key={k} className="pipeline-chip">
+          <span className="pipeline-chip__key">{k}</span>
+          <span className="pipeline-chip__val">
+            {Array.isArray(v) ? v.join(", ") || "—" : String(v)}
           </span>
         </div>
       ))}
@@ -97,10 +156,10 @@ function DataChips({ data }: { data: Record<string, unknown> }) {
 
 function CheckPills({ checks }: { checks: string[] }) {
   return (
-    <div className="data-chips">
+    <div className="pipeline-chips">
       {checks.map((c) => (
-        <div key={c} className="data-chip data-chip--success">
-          <span className="data-chip__val">✓ {c}</span>
+        <div key={c} className="pipeline-chip pipeline-chip--success">
+          <span className="pipeline-chip__val">✓ {c}</span>
         </div>
       ))}
     </div>
@@ -109,15 +168,19 @@ function CheckPills({ checks }: { checks: string[] }) {
 
 function ExecMeta({ time, rows }: { time: number; rows?: number }) {
   return (
-    <div className="exec-meta">
-      <div className="exec-meta__item">
-        <span className="exec-meta__label">time</span>
-        <span className="exec-meta__val">{(time * 1000).toFixed(1)}ms</span>
+    <div className="pipeline-metrics">
+      <div className="pipeline-metric">
+        <span className="pipeline-metric__label">LATENCY</span>
+        <span className="pipeline-metric__val">
+          {(time * 1000).toFixed(1)}ms
+        </span>
       </div>
       {rows !== undefined && (
-        <div className="exec-meta__item">
-          <span className="exec-meta__label">rows</span>
-          <span className="exec-meta__val">{rows}</span>
+        <div className="pipeline-metric">
+          <span className="pipeline-metric__label">VOLUME</span>
+          <span className="pipeline-metric__val">
+            {rows} row{rows !== 1 ? "s" : ""}
+          </span>
         </div>
       )}
     </div>
@@ -126,45 +189,33 @@ function ExecMeta({ time, rows }: { time: number; rows?: number }) {
 
 function SummaryPanel({ summary }: { summary: SummaryData }) {
   return (
-    <div className="summary-panel">
+    <div className="pipeline-summary">
       {summary.natural_summary && (
-        <p className="summary-panel__prose">{summary.natural_summary}</p>
+        <p className="pipeline-summary__prose">{summary.natural_summary}</p>
       )}
-
-      <div className="summary-grid">
-        <div className="summary-stat">
-          <span className="summary-stat__label">Rows returned</span>
-          <span className="summary-stat__val">{summary.rows_returned}</span>
+      <div className="pipeline-summary__grid">
+        <div className="pipeline-summary__stat">
+          <span className="pipeline-summary__stat-label">Rows Affected</span>
+          <span className="pipeline-summary__stat-val">
+            {summary.rows_returned}
+          </span>
         </div>
-        <div className="summary-stat">
-          <span className="summary-stat__label">Query time</span>
-          <span className="summary-stat__val">
+        <div className="pipeline-summary__stat">
+          <span className="pipeline-summary__stat-label">Execution Time</span>
+          <span className="pipeline-summary__stat-val">
             {summary.execution_time_ms.toFixed(1)}ms
           </span>
         </div>
-        <div className="summary-stat">
-          <span className="summary-stat__label">Intent</span>
-          <span className="summary-stat__val">{summary.intent}</span>
+        <div className="pipeline-summary__stat">
+          <span className="pipeline-summary__stat-label">
+            Intent Classification
+          </span>
+          <span className="pipeline-summary__stat-val">{summary.intent}</span>
         </div>
-        {summary.tables_used?.length > 0 && (
-          <div className="summary-stat">
-            <span className="summary-stat__label">Tables</span>
-            <span className="summary-stat__val">
-              {summary.tables_used.join(", ")}
-            </span>
-          </div>
-        )}
       </div>
-
       {summary.sql && (
-        <div style={{ marginTop: "12px" }}>
-          <SqlBlock sql={summary.sql} label="Final SQL" />
-        </div>
-      )}
-
-      {summary.safety_checks?.length > 0 && (
-        <div style={{ marginTop: "10px" }}>
-          <CheckPills checks={summary.safety_checks} />
+        <div style={{ marginTop: "14px" }}>
+          <SqlBlock sql={summary.sql} label="Final Transformed Statement" />
         </div>
       )}
     </div>
@@ -175,122 +226,121 @@ export function StepCard({ step, index }: StepCardProps) {
   const meta = STEP_META[step.step] ?? {
     label: step.step,
     icon: "•",
-    color: "#888",
+    color: "var(--accent)",
     description: "",
   };
-  const status = step.status ?? "in_progress";
+
+  const serverStatus = step.status ?? "in_progress";
+
+  let status = serverStatus;
+  if (
+    serverStatus === "completed" &&
+    step.step === "generate_query" &&
+    !(step.query ?? step.executed_query)
+  ) {
+    status = "in_progress";
+  }
+
+  const textMessage =
+    typeof step.explanation === "string" && step.explanation.length > 0
+      ? step.explanation
+      : typeof step.message === "string" && step.message.length > 0
+        ? step.message
+        : null;
 
   return (
     <div
-      className={`step-card step-card--${status} ${
-        step.step === "summary" ? "step-card--summary" : ""
-      }`}
+      className={`pipeline-node pipeline-node--${status}`}
       style={
         {
-          "--step-color": meta.color,
-          animationDelay: `${index * 60}ms`,
+          "--node-color": meta.color,
+          animationDelay: `${index * 40}ms`,
         } as React.CSSProperties
       }
     >
-      <div className="step-card__header">
-        <div className="step-card__icon-wrap">
+      <div className="pipeline-node__track">
+        <div className="pipeline-node__indicator">
           {status === "in_progress" ? (
-            <span className="spinner" />
+            <div className="pipeline-node__spinner" />
           ) : (
-            <span className="step-card__icon">{meta.icon}</span>
+            <span className="pipeline-node__icon">{meta.icon}</span>
           )}
-          {status === "in_progress" && <span className="step-card__pulse" />}
         </div>
-
-        <div className="step-card__meta">
-          <span className="step-card__label">{meta.label}</span>
-          <span className="step-card__desc">{meta.description}</span>
-        </div>
-
-        <div className="step-card__right">
-          {step.execution_time !== undefined && (
-            <span className="step-card__time">
-              {(step.execution_time * 1000).toFixed(1)}ms
-            </span>
-          )}
-          <span className={`step-badge step-badge--${status}`}>
-            {status === "in_progress"
-              ? "Running"
-              : status === "completed"
-                ? "Done"
-                : "Failed"}
-          </span>
-        </div>
+        <div className="pipeline-node__line" />
       </div>
 
-      {(() => {
-        const text =
-          typeof step.explanation === "string" && step.explanation.length > 0
-            ? step.explanation
-            : typeof step.message === "string" && step.message.length > 0
-              ? step.message
-              : null;
-        return text ? (
-          <div className="step-card__body">
-            <ExplanationBanner text={text} />
+      <div className="pipeline-node__content">
+        <div className="pipeline-node__header">
+          <div className="pipeline-node__titles">
+            <h3 className="pipeline-node__title">{meta.label}</h3>
+            {meta.description && (
+              <p className="pipeline-node__subtitle">{meta.description}</p>
+            )}
           </div>
-        ) : null;
-      })()}
-
-      {step.step === "interpret" && step.data != null ? (
-        <div className="step-card__body">
-          <DataChips data={step.data as Record<string, unknown>} />
+          <div className="pipeline-node__badges">
+            {step.execution_time !== undefined && (
+              <span className="pipeline-node__time">
+                {(step.execution_time * 1000).toFixed(1)}ms
+              </span>
+            )}
+            <span className={`pipeline-tag pipeline-tag--${status}`}>
+              {status === "in_progress"
+                ? "Streaming"
+                : status === "completed"
+                  ? "Completed"
+                  : "Halted"}
+            </span>
+          </div>
         </div>
-      ) : null}
 
-      {step.step === "plan" && step.data != null ? (
-        <div className="step-card__body">
-          <DataChips data={step.data as Record<string, unknown>} />
-        </div>
-      ) : null}
+        <div className="pipeline-node__body">
+          {textMessage && <CollapsibleExplanation text={textMessage} />}
 
-      {step.step === "generate_query" &&
-      (step.query ?? step.executed_query) != null ? (
-        <div className="step-card__body">
-          <SqlBlock sql={(step.query ?? step.executed_query)!} />
-        </div>
-      ) : null}
+          {step.step === "interpret" && step.data != null && (
+            <DataChips data={step.data as Record<string, unknown>} />
+          )}
 
-      {step.step === "validate" && step.data != null ? (
-        <div className="step-card__body">
-          <CheckPills
-            checks={(step.data as { checks?: string[] }).checks ?? []}
-          />
-        </div>
-      ) : null}
+          {step.step === "plan" && step.data != null && (
+            <DataChips data={step.data as Record<string, unknown>} />
+          )}
 
-      {step.step === "execute" ? (
-        <div className="step-card__body">
-          {(step.query ?? step.executed_query) != null ? (
-            <SqlBlock
-              sql={(step.query ?? step.executed_query)!}
-              label="Executed SQL"
+          {step.step === "generate_query" &&
+            (step.query ?? step.executed_query) != null && (
+              <SqlBlock
+                sql={(step.query ?? step.executed_query)!}
+                label="Compiled Execution Code"
+              />
+            )}
+
+          {step.step === "validate" && step.data != null && (
+            <CheckPills
+              checks={(step.data as { checks?: string[] }).checks ?? []}
             />
-          ) : null}
-          {step.execution_time !== undefined ? (
-            <div style={{ marginTop: "8px" }}>
-              <ExecMeta time={step.execution_time} rows={step.row_count} />
+          )}
+
+          {step.step === "execute" && (
+            <div className="pipeline-execute-wrapper">
+              {(step.query ?? step.executed_query) != null && (
+                <SqlBlock
+                  sql={(step.query ?? step.executed_query)!}
+                  label="Active Dialect Run"
+                />
+              )}
+              {step.execution_time !== undefined && (
+                <ExecMeta time={step.execution_time} rows={step.row_count} />
+              )}
             </div>
-          ) : null}
-        </div>
-      ) : null}
+          )}
 
-      {step.step === "summary" && step.summary != null ? (
-        <div className="step-card__body">
-          <SummaryPanel summary={step.summary} />
-        </div>
-      ) : null}
+          {step.step === "summary" && step.summary != null && (
+            <SummaryPanel summary={step.summary} />
+          )}
 
-      {typeof step.error === "string" && step.error.length > 0 ? (
-        <div className="step-card__body">
-          <div className="step-error">{step.error}</div>
+          {typeof step.error === "string" && step.error.length > 0 && (
+            <div className="pipeline-node__error-msg">{step.error}</div>
+          )}
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }

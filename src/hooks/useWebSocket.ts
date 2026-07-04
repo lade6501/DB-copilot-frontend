@@ -33,7 +33,10 @@ export function useWebSocket() {
     if (wsRef.current) wsRef.current.close();
 
     setIsConnecting(true);
-    const ws: WS = new WebSocket(WS_URL);
+
+    const token = localStorage.getItem("access_token");
+
+    const ws: WS = new WebSocket(`${WS_URL}?token=${token}`);
     wsRef.current = ws;
 
     ws.onopen = () => {

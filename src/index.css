@@ -1,5 +1,36 @@
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap");
 
+:root {
+  --bg: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f1f5f9;
+  --bg-muted: #f8fafc;
+  --border: #e2e8f0;
+  --border-hover: #cbd5e1;
+  --border-focus: #4f46e5;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-subtle: #94a3b8;
+  --accent: #4f46e5;
+  --accent-dim: #e0e7ff;
+  --accent-glow: rgba(79, 70, 229, 0.1);
+  --green: #10b981;
+  --green-dim: #d1fae5;
+  --amber: #f59e0b;
+  --amber-dim: #fef3c7;
+  --red: #ef4444;
+  --red-dim: #fee2e2;
+  --blue: #0ea5e9;
+  --blue-dim: #e0f2fe;
+  --code-bg: #0f172a;
+  --code-text: #38bdf8;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+}
+
 :root[data-theme="light"] {
   --bg: #f8fafc;
   --bg-surface: #ffffff;
@@ -50,14 +81,6 @@
   --blue-dim: rgba(56, 189, 248, 0.1);
   --code-bg: #111113;
   --code-text: #34d399;
-}
-
-:root {
-  --font-body: "Inter", sans-serif;
-  --font-mono: "IBM Plex Mono", monospace;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
 }
 
 *,
@@ -1904,4 +1927,416 @@ body {
   color: var(--text-muted);
   padding: 2px 6px;
   border-radius: 4px;
+}
+
+.result-panel {
+  height: 100%;
+  overflow: auto;
+  background: #fff;
+  border-left: 1px solid #e5e7eb;
+  padding: 24px;
+}
+
+.empty-state {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.empty-state__icon {
+  font-size: 56px;
+}
+
+.result-table-wrapper {
+  overflow: auto;
+}
+
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.result-table th {
+  background: #f8fafc;
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.result-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #eef2ff;
+}
+
+.crud-card {
+  max-width: 700px;
+  margin: auto;
+}
+
+.crud-card__icon {
+  font-size: 60px;
+}
+
+.crud-card h2 {
+  margin-top: 12px;
+}
+
+.crud-card__message {
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+.crud-card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.stat-card {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.stat-card span {
+  display: block;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.affected-ids {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.id-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #eef2ff;
+}
+
+.query-preview {
+  margin-top: 32px;
+}
+
+.query-preview pre {
+  background: #0f172a;
+  color: white;
+  padding: 16px;
+  border-radius: 10px;
+  overflow: auto;
+}
+
+/* --- Split Card Auth Layout (Wavy Design) --- */
+.auth-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 20px;
+}
+
+.auth-container {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.05),
+    0 10px 10px rgba(0, 0, 0, 0.02);
+  position: relative;
+  overflow: hidden;
+  width: 800px;
+  max-width: 100%;
+  min-height: 540px;
+}
+
+.form-container {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  transition: all 0.6s ease-in-out;
+}
+
+.sign-in-container {
+  left: 0;
+  width: 50%;
+  z-index: 2;
+}
+
+.sign-up-container {
+  left: 0;
+  width: 50%;
+  opacity: 0;
+  z-index: 1;
+}
+
+/* Base Form Styling */
+.auth-form {
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 45px;
+  height: 100%;
+  text-align: center;
+}
+
+.auth-title {
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 4px;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+
+.auth-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.auth-socials {
+  display: flex;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.social-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.social-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.auth-input-group {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.auth-input-group input {
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  width: 100%;
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 14px;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.auth-input-group input::placeholder {
+  color: var(--text-subtle);
+}
+
+.auth-input-group input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  background: var(--bg-surface);
+}
+
+.auth-forgot {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  text-decoration: none;
+  margin-bottom: 24px;
+  transition: color 0.2s;
+}
+
+.auth-forgot:hover {
+  color: var(--accent);
+}
+
+.auth-btn {
+  border-radius: 99px;
+  border: 1px solid transparent;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px 40px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition:
+    opacity 0.2s,
+    transform 0.1s;
+  cursor: pointer;
+  width: auto;
+  min-width: 160px;
+}
+
+.auth-btn:active {
+  transform: scale(0.97);
+}
+
+.auth-btn:hover {
+  opacity: 0.9;
+}
+
+.auth-btn--ghost {
+  background: transparent;
+  border-color: #ffffff;
+}
+
+/* --- Wavy Overlay Architecture --- */
+.overlay-container {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  background: var(--accent);
+  transition: transform 0.6s ease-in-out;
+  z-index: 100;
+}
+
+/* Wavy S-Curve SVG Edges */
+.wave-edge {
+  position: absolute;
+  top: 0;
+  width: 60px;
+  height: 100%;
+  fill: var(--accent);
+  transition: opacity 0.4s ease-in-out;
+  z-index: -1;
+}
+
+.wave-left {
+  left: -59px; /* Extends perfectly past the left boundary */
+  opacity: 1;
+}
+
+.wave-right {
+  right: -59px; /* Extends perfectly past the right boundary */
+  opacity: 0;
+}
+
+/* Overlay Panel Content (Text & Buttons) */
+.overlay-panel {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 40px;
+  text-align: center;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  color: #ffffff;
+  transition:
+    transform 0.6s ease-in-out,
+    opacity 0.6s ease-in-out;
+}
+
+.overlay-panel h2 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+
+.overlay-panel p {
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 400;
+  margin-bottom: 32px;
+  opacity: 0.95;
+}
+
+.overlay-left {
+  transform: translateX(-20%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.overlay-right {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* --- Active Animation Triggers --- */
+.auth-container.right-panel-active .sign-in-container {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.auth-container.right-panel-active .sign-up-container {
+  transform: translateX(100%);
+  opacity: 1;
+  z-index: 5;
+  animation: show 0.6s;
+}
+
+.auth-container.right-panel-active .overlay-container {
+  transform: translateX(-100%);
+}
+
+.auth-container.right-panel-active .wave-left {
+  opacity: 0;
+}
+
+.auth-container.right-panel-active .wave-right {
+  opacity: 1;
+}
+
+.auth-container.right-panel-active .overlay-left {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.auth-container.right-panel-active .overlay-right {
+  transform: translateX(20%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes show {
+  0%,
+  49.99% {
+    opacity: 0;
+    z-index: 1;
+  }
+  50%,
+  100% {
+    opacity: 1;
+    z-index: 5;
+  }
 }

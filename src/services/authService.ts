@@ -1,0 +1,38 @@
+import type { RegisterRequest, LoginRequest } from "../types/index";
+
+const API_BASE = "http://localhost:8000";
+
+
+export async function register(data: RegisterRequest) {
+  const response = await fetch(`${API_BASE}/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || "Registration failed");
+  }
+
+  return response.json();
+}
+
+export async function login(data: LoginRequest) {
+  const response = await fetch(`${API_BASE}/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || "Login failed");
+  }
+
+  return response.json();
+}

@@ -67,6 +67,7 @@ export default function Home() {
 
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [devMode, setDevMode] = useState(true);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   const stepsEndRef = useRef<HTMLDivElement>(null);
   const inputBarRef = useRef<HTMLDivElement>(null);
@@ -105,6 +106,13 @@ export default function Home() {
   const latestStep = rawVisibleSteps[rawVisibleSteps.length - 1];
   const activeStep = latestStep?.step || "start";
   const friendlyMessage = BUSINESS_STATUS_MAP[activeStep] || "Processing...";
+
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("access_token");
+    setIsProfileMenuOpen(false);
+    window.location.href = "/auth";
+  };
 
   return (
     <div className="app">
@@ -180,6 +188,47 @@ export default function Home() {
               </svg>
             )}
           </button>
+
+          <div className="topbar__divider" />
+
+          <div className="profile-menu-wrap">
+            <button
+              className="profile-btn"
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              aria-label="Profile menu"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </button>
+
+            {isProfileMenuOpen && (
+              <div className="profile-dropdown">
+                <button
+                  className="profile-dropdown-item"
+                  onClick={() => setIsProfileMenuOpen(false)}
+                >
+                  View Profile
+                </button>
+                <button
+                  className="profile-dropdown-item danger"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 

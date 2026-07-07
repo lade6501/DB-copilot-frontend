@@ -1,33 +1,23 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Login } from "./Login";
 import { Register } from "./Register";
 
-export function AuthContainer({
-  onAuthSuccess,
-}: {
-  onAuthSuccess?: () => void;
-}) {
+export function AuthContainer() {
   const [isSignUpActive, setIsSignUpActive] = useState(false);
-  const navigate = useNavigate();
-
-  const handleAuthSuccess = () => {
-    localStorage.setItem("isAuthenticated", "true");
-    onAuthSuccess?.();
-    navigate("/", { replace: true });
-  };
 
   return (
     <div className="auth-wrapper">
       <div
-        className={`auth-container ${isSignUpActive ? "right-panel-active" : ""}`}
+        className={`auth-container ${
+          isSignUpActive ? "right-panel-active" : ""
+        }`}
       >
         <div className="form-container sign-up-container">
           <Register />
         </div>
 
         <div className="form-container sign-in-container">
-          <Login onSubmit={handleAuthSuccess} />
+          <Login />
         </div>
 
         <div className="overlay-container">
@@ -49,9 +39,11 @@ export function AuthContainer({
 
           <div className="overlay-panel overlay-left">
             <h2>Welcome Back!</h2>
+
             <p>
               To keep connected with us please login with your personal info
             </p>
+
             <button
               className="auth-btn auth-btn--ghost"
               onClick={() => setIsSignUpActive(false)}
@@ -62,7 +54,9 @@ export function AuthContainer({
 
           <div className="overlay-panel overlay-right">
             <h2>Hello, Friend!</h2>
+
             <p>Enter your personal details and start your journey with us</p>
+
             <button
               className="auth-btn auth-btn--ghost"
               onClick={() => setIsSignUpActive(true)}

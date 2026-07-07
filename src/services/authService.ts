@@ -1,38 +1,46 @@
-import type { RegisterRequest, LoginRequest } from "../types/index";
+import apiClient from "../api/apiClient";
 
-const API_BASE = "http://localhost:8000";
+import type {
+  RegisterRequest,
+  LoginRequest,
+  User,
+} from "../types";
 
-
-export async function register(data: RegisterRequest) {
-  const response = await fetch(`${API_BASE}/auth/register`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Registration failed");
-  }
-
-  return response.json();
+export interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  user: User;
 }
 
-export async function login(data: LoginRequest) {
-  const response = await fetch(`${API_BASE}/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
+export async function register(
+  data: RegisterRequest
+): Promise<void> {
+  await apiClient.post("/auth/register", data);
+}
+
+export async function login(
+  data: LoginRequest
+): Promise<LoginResponse> {
+  const response = await apiClient.post<LoginResponse>(
+    "/auth/login",
+    data
+  );
+
+  return response.data;
+}
+
+export async function logout(
+  refreshToken: string
+): Promise<void> {
+  await apiClient.post("/auth/logout", {
+    refresh_token: refreshToken,
   });
+}
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Login failed");
-  }
+export async function getCurrentUser(): Promise<User> {
+  const response =
+    await apiClient.get<User>("/auth/me");
 
-  return response.json();
+  return response.data;
 }

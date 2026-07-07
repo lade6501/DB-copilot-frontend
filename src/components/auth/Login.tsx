@@ -1,18 +1,28 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { useAuth } from "../../hooks/useAuth";
+import { getErrorMessage } from "../../utils/apiError";
 
 import type { LoginRequest } from "../../types";
-import { login } from "../../services/authService";
 
-export function Login({ onSubmit }: { onSubmit?: () => void }) {
+export function Login() {
+  const navigate = useNavigate();
+
+  const { login } = useAuth();
+
   const [formData, setFormData] = useState<LoginRequest>({
     username: "",
     password: "",
   });
 
   const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const { name, value } = e.target;
 
     setFormData((prev) => ({
@@ -20,92 +30,127 @@ export function Login({ onSubmit }: { onSubmit?: () => void }) {
       [name]: value,
     }));
 
-   
     if (error) {
       setError("");
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (
+    e: React.FormEvent
+  ) => {
+
     e.preventDefault();
 
     setLoading(true);
     setError("");
 
     try {
-      const result = await login(formData);
 
-      localStorage.setItem("access_token", result.access_token);
-      localStorage.setItem("isAuthenticated", "true");
+      await login(formData);
 
-      onSubmit?.();
-    } catch (err: any) {
-      setError(err?.message || "Unable to login. Please try again.");
+      navigate("/", {
+        replace: true,
+      });
+
+    } catch (error) {
+
+      setError(
+        getErrorMessage(error)
+      );
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
   return (
-    <form className="auth-form" onSubmit={handleLogin}>
-      <h2 className="auth-title">Sign in</h2>
+    <form
+      className="auth-form"
+      onSubmit={handleLogin}
+    >
+      <h2 className="auth-title">
+        Sign in
+      </h2>
 
       <div className="auth-socials">
-        <button type="button" className="social-btn">
+        <button
+          type="button"
+          className="social-btn"
+        >
           f
         </button>
-        <button type="button" className="social-btn">
+
+        <button
+          type="button"
+          className="social-btn"
+        >
           G+
         </button>
-        <button type="button" className="social-btn">
+
+        <button
+          type="button"
+          className="social-btn"
+        >
           in
         </button>
       </div>
 
-      <span className="auth-subtitle">or use your account</span>
+      <span className="auth-subtitle">
+        or use your account
+      </span>
 
       <div className="auth-input-group">
+
         <input
           type="text"
-          placeholder="User Name"
           name="username"
+          placeholder="User Name"
           value={formData.username}
           onChange={handleChange}
-          required
           disabled={loading}
+          required
         />
 
         <input
           type="password"
-          placeholder="Password"
           name="password"
+          placeholder="Password"
           value={formData.password}
           onChange={handleChange}
-          required
           disabled={loading}
+          required
         />
+
       </div>
 
       {error && (
         <p
-          style={{
-            color: "#e74c3c",
-            fontSize: "14px",
-            marginTop: "8px",
-            textAlign: "center",
-          }}
+          className="auth-error"
         >
           {error}
         </p>
       )}
 
-      <a href="#" className="auth-forgot">
+      <a
+        href="#"
+        className="auth-forgot"
+      >
         Forgot your password?
       </a>
 
-      <button type="submit" className="auth-btn" disabled={loading}>
-        {loading ? "Signing In..." : "Sign In"}
+      <button
+        type="submit"
+        className="auth-btn"
+        disabled={loading}
+      >
+        {loading
+          ? "Signing In..."
+          : "Sign In"}
       </button>
+
     </form>
   );
 }

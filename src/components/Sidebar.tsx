@@ -69,7 +69,6 @@ export function Sidebar({ history, onSelect, onClear }: SidebarProps) {
                   <span className="sidebar__item-query">{h.query}</span>
                 </div>
                 <div className="sidebar__item-meta">
-                  {h.rowCount !== undefined && <span>{h.rowCount} rows</span>}
                   <span>{formatTime(h.timestamp)}</span>
                 </div>
               </li>

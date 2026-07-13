@@ -6,7 +6,17 @@ export type StepType =
   | "plan"
   | "generate_query"
   | "validate"
+  | "impact_analysis"
+  | "risk_analysis"
+  | "policy_check"
+  | "approval_required"
+  | "approval_requested"
+  | "approval_approved"
+  | "approval_rejected"
+  | "execution_started"
   | "execute"
+  | "execution_completed"
+  | "result_ready"
   | "summary"
   | "done"
   | "error";
@@ -54,7 +64,7 @@ export interface Step {
 
   explanation?: string;
 
-  data?: unknown;
+  data?: Record<string, unknown>;
 
   result?: QueryResult;
 
@@ -67,6 +77,14 @@ export interface Step {
   summary?: SummaryData;
 
   message?: string;
+
+  approval?: ApprovalInfo;
+
+  execution?: ExecutionInfo;
+
+  audit?: AuditInfo;
+
+  [key: string]: unknown;
 }
 
 export interface QuerySession {
@@ -80,9 +98,21 @@ export interface QuerySession {
 
   status: "running" | "completed" | "error";
 
+  workflowStatus: WorkflowStatus;
+
   success: boolean;
 
   result?: QueryResult;
+
+  approval?: ApprovalInfo;
+
+  approvalId?: string;
+
+  polling?: boolean;
+
+  execution?: ExecutionInfo;
+
+  audit?: AuditInfo;
 }
 
 export interface RegisterRequest {
@@ -105,4 +135,88 @@ export interface User {
 export interface ApiErrorResponse {
   detail: string;
   code: string;
+}
+
+export type WorkflowStatus =
+  | "running"
+  | "awaiting_approval"
+  | "approved"
+  | "executing"
+  | "completed"
+  | "failed"
+  | "rejected";
+
+export interface ApprovalInfo {
+  approval_id: string;
+
+  status: string;
+
+  risk_level?: string;
+
+  rows_affected?: number;
+
+  approval_comment?: string;
+
+  workflow_state: WorkflowSnapshot;
+
+  approved_at?: string;
+
+  executed_at?: string;
+
+  failed_at?: string;
+
+  created_at?: string;
+}
+
+export interface ExecutionInfo {
+  transactionId?: string;
+
+  startedAt?: string;
+
+  completedAt?: string;
+
+  durationMs?: number;
+
+  rowsAffected?: number;
+
+  committed?: boolean;
+}
+
+export interface AuditInfo {
+  workflowId?: string;
+
+  requestId?: string;
+
+  correlationId?: string;
+}
+
+export interface ApprovalPayload {
+  approval_id: string;
+  status: string;
+  risk_level: string;
+  rows_affected: number;
+}
+
+export interface WorkflowSnapshot {
+  version: number;
+
+  user: Record<string, unknown>;
+
+  input: Record<string, unknown>;
+
+  interpretation: Record<string, unknown>;
+
+  plan: Record<string, unknown>;
+
+  sql: Record<string, unknown>;
+
+  impact: Record<string, unknown>;
+
+  risk: Record<string, unknown>;
+
+  policy: Record<string, unknown>;
+
+  metadata: Record<string, unknown>;
+
+  result?: QueryResult;
 }

@@ -1,0 +1,37 @@
+.request-status-card {
+  padding: 20px;
+}
+
+.request-status-card__header {
+  font-size: 12px;
+  text-transform: uppercase;
+  opacity: .6;
+  margin-bottom: 8px;
+}
+
+.request-status-card__query {
+  font-weight: 600;
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+.request-status-card__status {
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.request-status-card__grid {
+  display: grid;
+  gap: 18px;
+}
+
+.request-status-card__grid span {
+  display: block;
+  font-size: 11px;
+  opacity: .6;
+  margin-bottom: 4px;
+}
+
+.request-status-card__grid strong {
+  font-size: 14px;
+}

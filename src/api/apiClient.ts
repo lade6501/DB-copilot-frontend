@@ -30,12 +30,16 @@ const processQueue = (error: unknown, token?: string) => {
   failedQueue = [];
 };
 
-apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+apiClient.interceptors.request.use((config) => {
   const token = tokenStorage.getAccessToken();
+
+  console.log("Token:", token);
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  console.log("Headers:", config.headers);
 
   return config;
 });
@@ -94,7 +98,7 @@ apiClient.interceptors.response.use(
         `${apiClient.defaults.baseURL}/auth/refresh`,
         {
           refresh_token: tokens.refreshToken,
-        }
+        },
       );
 
       const { access_token, refresh_token } = response.data;
@@ -120,7 +124,7 @@ apiClient.interceptors.response.use(
     } finally {
       isRefreshing = false;
     }
-  }
+  },
 );
 
 export default apiClient;

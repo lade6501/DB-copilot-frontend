@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
 import { QueryInput } from "./QueryInput";
-import { StepCard } from "./StepCard";
+import { StepCard } from "../components/steps_card/StepCard";
 import { useWebSocket } from "../hooks/useWebSocket";
-import type { QuerySession } from "../types/index";
-import ResultPanel from "./ResultPanel";
+import ResultPanel from "./result_panel/ResultPanel";
+import RequestOverview from "./requestoverview/RequestOverview";
+import { Sidebar } from "./Sidebar";
+import { useApprovalPolling } from "../hooks/useApprovalPolling";
+import { workflowToSteps } from "../utils/workflowMapper";
 
 const BUSINESS_STATUS_MAP: Record<string, string> = {
   start: "Securing database connection...",
@@ -16,54 +19,16 @@ const BUSINESS_STATUS_MAP: Record<string, string> = {
   summary: "Formatting the final report...",
 };
 
-function Sidebar({
-  sessions,
-  activeSessionId,
-  onSelect,
-}: {
-  sessions: QuerySession[];
-  activeSessionId: string | null;
-  onSelect: (id: string) => void;
-}) {
-  return (
-    <nav className="sidebar">
-      <span className="sidebar__label">History Logs</span>
-      {sessions.length === 0 && (
-        <span className="sidebar__empty">No active sessions</span>
-      )}
-      {sessions.map((s) => (
-        <div
-          key={s.id}
-          className={`session-item ${s.id === activeSessionId ? "session-item--active" : ""}`}
-          onClick={() => onSelect(s.id)}
-        >
-          <div className="session-item__query">{s.query}</div>
-          <div className="session-item__meta">
-            <span
-              className={`session-item__dot session-item__dot--${s.status}`}
-            />
-            {s.timestamp.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-            {" · "}
-            {s.steps.filter((st) => st.step !== "done").length} steps
-          </div>
-        </div>
-      ))}
-    </nav>
-  );
-}
-
 export default function Home() {
   const {
-    sessions,
-    activeSessionId,
-    setActiveSessionId,
-    activeSession,
-    isConnecting,
-    sendQuery,
-  } = useWebSocket();
+  sessions,
+  setSessions,
+  activeSessionId,
+  setActiveSessionId,
+  activeSession,
+  isConnecting,
+  sendQuery,
+} = useWebSocket(); 
 
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [devMode, setDevMode] = useState(true);
@@ -72,6 +37,44 @@ export default function Home() {
   const stepsEndRef = useRef<HTMLDivElement>(null);
   const inputBarRef = useRef<HTMLDivElement>(null);
   const isRunning = activeSession?.status === "running" || isConnecting;
+
+  useApprovalPolling({
+    approvalId: activeSession?.approvalId,
+    enabled: activeSession?.polling ?? false,
+
+    onCompleted: (approval) => {
+      const workflow = approval.workflow_state;
+
+      setSessions((prev) =>
+        prev.map((session) => {
+          if (session.id !== activeSession?.id) {
+            return session;
+          }
+
+          return {
+            ...session,
+
+            polling: false,
+
+            approval: approval,
+
+            workflowStatus:
+              approval.status === "EXECUTED"
+                ? "completed"
+                : approval.status === "REJECTED"
+                  ? "rejected"
+                  : "failed",
+
+            status: approval.status === "EXECUTED" ? "completed" : "error",
+
+            steps: workflowToSteps(workflow, approval.status),
+
+            result: workflow.result ?? session.result,
+          };
+        }),
+      );
+    },
+  });
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -236,10 +239,15 @@ export default function Home() {
         sessions={sessions}
         activeSessionId={activeSessionId}
         onSelect={setActiveSessionId}
+        onClear={() => {
+          // we'll implement later
+        }}
       />
 
       <main className="main">
         {isRunning && <div className="running-bar" />}
+
+        {activeSession && <RequestOverview session={activeSession} />}
 
         <div
           className="main__steps"

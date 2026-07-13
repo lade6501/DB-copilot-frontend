@@ -1,4 +1,4 @@
-import type { QueryResult } from "../types";
+import type { QueryResult } from "../../types";
 
 interface Props {
   result: QueryResult;

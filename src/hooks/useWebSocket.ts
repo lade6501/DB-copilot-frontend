@@ -1,11 +1,40 @@
 import { useState, useRef, useCallback } from "react";
 
-import type { Step, QuerySession } from "../types";
+import type { Step, QuerySession, WorkflowStatus } from "../types";
 import { getValidAccessToken } from "../utils/authUtils";
 
 const WS_URL = "ws://localhost:8000/ws/query";
 
 type WS = WebSocket;
+
+function getWorkflowStatus(step: Step): WorkflowStatus {
+  switch (step.step) {
+    case "approval_required":
+    case "approval_requested":
+      return "awaiting_approval";
+
+    case "approval_approved":
+      return "approved";
+
+    case "approval_rejected":
+      return "rejected";
+
+    case "execution_started":
+      return "executing";
+
+    case "execution_completed":
+    case "result_ready":
+    case "summary":
+    case "done":
+      return "completed";
+
+    case "error":
+      return "failed";
+
+    default:
+      return "running";
+  }
+}
 
 export function useWebSocket() {
   const [sessions, setSessions] = useState<QuerySession[]>([]);
@@ -26,9 +55,25 @@ export function useWebSocket() {
       id: sessionId,
       query,
       timestamp: new Date(),
+
       steps: [],
+
       status: "running",
+      workflowStatus: "running",
+
       success: false,
+
+      result: undefined,
+
+      approval: undefined,
+
+      approvalId: undefined,
+
+      polling: false,
+
+      execution: undefined,
+
+      audit: undefined,
     };
 
     setSessions((prev) => [newSession, ...prev]);
@@ -66,6 +111,7 @@ export function useWebSocket() {
               ? {
                   ...s,
                   status: "error",
+                  workflowStatus: "failed",
                 }
               : s,
           ),
@@ -76,6 +122,13 @@ export function useWebSocket() {
         try {
           const step: Step = JSON.parse(event.data);
 
+          const workflowStatus = getWorkflowStatus(step);
+
+          const approvalId =
+            step.step === "approval_required"
+              ? (step.approval_id as string | undefined)
+              : undefined;
+
           setSessions((prev) =>
             prev.map((s) => {
               if (s.id !== sessionId) {
@@ -84,33 +137,55 @@ export function useWebSocket() {
 
               const updatedSteps = [...s.steps];
 
-              const index = updatedSteps.findIndex(
+              const existingIndex = updatedSteps.findIndex(
                 (st) => st.step === step.step,
               );
 
-              if (index >= 0) {
-                updatedSteps[index] = {
-                  ...updatedSteps[index],
+              if (existingIndex >= 0) {
+                updatedSteps[existingIndex] = {
+                  ...updatedSteps[existingIndex],
                   ...step,
-                  status: "completed",
+                  status: step.status ?? "completed",
                 };
               } else {
                 updatedSteps.push({
                   ...step,
-                  status: "completed",
+                  status: step.status ?? "completed",
                 });
               }
 
               return {
                 ...s,
+
+                approvalId: approvalId ?? s.approvalId,
+
+                polling: step.step === "approval_required" ? true : s.polling,
+
                 steps: updatedSteps,
-                result: step.step === "execute" ? step.result : s.result,
+
+                workflowStatus,
+
                 status:
-                  step.step === "done"
+                  workflowStatus === "completed"
                     ? "completed"
-                    : step.step === "error"
+                    : workflowStatus === "failed"
                       ? "error"
                       : "running",
+
+                success:
+                  workflowStatus === "completed"
+                    ? true
+                    : workflowStatus === "failed"
+                      ? false
+                      : s.success,
+
+                result: step.result ?? s.result,
+
+                approval: step.approval ?? s.approval,
+
+                execution: step.execution ?? s.execution,
+
+                audit: step.audit ?? s.audit,
               };
             }),
           );
@@ -119,14 +194,16 @@ export function useWebSocket() {
             ws.close();
           }
         } catch (err) {
-          console.error(err);
+          console.error("WebSocket parse error:", err);
         }
       };
 
       ws.onclose = () => {
         setIsConnecting(false);
       };
-    } catch {
+    } catch (err) {
+      console.error(err);
+
       setIsConnecting(false);
 
       setSessions((prev) =>
@@ -135,6 +212,7 @@ export function useWebSocket() {
             ? {
                 ...s,
                 status: "error",
+                workflowStatus: "failed",
               }
             : s,
         ),
@@ -144,6 +222,7 @@ export function useWebSocket() {
 
   return {
     sessions,
+    setSessions,
     activeSessionId,
     setActiveSessionId,
     activeSession: getActiveSession(),

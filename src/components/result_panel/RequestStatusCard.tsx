@@ -1,4 +1,5 @@
 import type { QuerySession } from "../../types";
+import { RiskBadge } from "../RiskBadge";
 
 interface Props {
   session: QuerySession;
@@ -32,20 +33,6 @@ function getCurrentStage(session: QuerySession) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function getRisk(session: QuerySession) {
-  const step = session.steps.find((s) => s.step === "risk_analysis");
-
-  if (!step) return "Unknown";
-
-  if ("risk" in step && typeof step.risk === "string") {
-    return step.risk;
-  }
-
-  const data = step.data as Record<string, unknown> | undefined;
-
-  return (data?.risk_level as string) ?? (data?.risk as string) ?? "Unknown";
-}
-
 export default function RequestStatusCard({ session }: Props) {
   const color = STATUS_COLORS[session.workflowStatus];
 
@@ -62,22 +49,24 @@ export default function RequestStatusCard({ session }: Props) {
       <div className="request-status-card__grid">
         <div>
           <span>Stage</span>
-          <strong>{getCurrentStage(session)}</strong>
+          <strong className="block mt-0.5">{getCurrentStage(session)}</strong>
         </div>
 
         <div>
           <span>Risk</span>
-          <strong>{getRisk(session)}</strong>
+          <div className="mt-1">
+            <RiskBadge session={session} />
+          </div>
         </div>
 
         <div>
           <span>Started</span>
-          <strong>{session.timestamp.toLocaleTimeString()}</strong>
+          <strong className="block mt-0.5">{session.timestamp.toLocaleTimeString()}</strong>
         </div>
 
         <div>
           <span>Steps</span>
-          <strong>{session.steps.length}</strong>
+          <strong className="block mt-0.5">{session.steps.length}</strong>
         </div>
       </div>
     </div>

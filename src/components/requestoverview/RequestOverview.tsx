@@ -1,5 +1,5 @@
 import type { QuerySession, WorkflowStatus } from "../../types";
-import "./style.css";
+import { RiskBadge } from "../RiskBadge";
 
 interface Props {
   session: QuerySession | null;
@@ -9,48 +9,62 @@ const STATUS_META: Record<
   WorkflowStatus,
   {
     label: string;
-    color: string;
+    bgColor: string;
+    textColor: string;
+    borderColor: string;
+    dotColor: string;
   }
 > = {
   running: {
     label: "Running",
-    color: "#3b82f6",
+    bgColor: "bg-blue-50 dark:bg-blue-950/20",
+    textColor: "text-blue-700 dark:text-blue-400",
+    borderColor: "border-blue-200 dark:border-blue-900/30",
+    dotColor: "bg-blue-500 animate-pulse",
   },
   awaiting_approval: {
-    label: "Waiting for Approval",
-    color: "#f59e0b",
+    label: "Awaiting Approval",
+    bgColor: "bg-amber-50 dark:bg-amber-950/20",
+    textColor: "text-amber-700 dark:text-amber-450",
+    borderColor: "border-amber-200 dark:border-amber-900/30",
+    dotColor: "bg-amber-500 animate-pulse",
   },
   approved: {
     label: "Approved",
-    color: "#10b981",
+    bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
+    textColor: "text-emerald-700 dark:text-emerald-400",
+    borderColor: "border-emerald-200 dark:border-emerald-900/30",
+    dotColor: "bg-emerald-500",
   },
   executing: {
     label: "Executing",
-    color: "#6366f1",
+    bgColor: "bg-indigo-50 dark:bg-indigo-950/20",
+    textColor: "text-indigo-700 dark:text-indigo-400",
+    borderColor: "border-indigo-200 dark:border-indigo-900/30",
+    dotColor: "bg-indigo-500 animate-pulse",
   },
   completed: {
     label: "Completed",
-    color: "#22c55e",
+    bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
+    textColor: "text-emerald-700 dark:text-emerald-400",
+    borderColor: "border-emerald-200 dark:border-emerald-900/30",
+    dotColor: "bg-emerald-505",
   },
   failed: {
     label: "Failed",
-    color: "#ef4444",
+    bgColor: "bg-rose-50 dark:bg-rose-955/20",
+    textColor: "text-rose-700 dark:text-rose-455",
+    borderColor: "border-rose-200 dark:border-rose-900/30",
+    dotColor: "bg-rose-505",
   },
   rejected: {
     label: "Rejected",
-    color: "#ef4444",
+    bgColor: "bg-rose-50 dark:bg-rose-955/20",
+    textColor: "text-rose-700 dark:text-rose-455",
+    borderColor: "border-rose-200 dark:border-rose-900/30",
+    dotColor: "bg-rose-505",
   },
 };
-
-function getRisk(session: QuerySession): string {
-  const riskStep = session.steps.find((s) => s.step === "risk_analysis");
-
-  if (!riskStep) return "Unknown";
-
-  const data = riskStep.data as Record<string, unknown> | undefined;
-
-  return (data?.risk_level as string) ?? (data?.risk as string) ?? "Unknown";
-}
 
 function getCurrentStage(session: QuerySession): string {
   if (session.steps.length === 0) return "Starting";
@@ -63,56 +77,55 @@ function getCurrentStage(session: QuerySession): string {
 export default function RequestOverview({ session }: Props) {
   if (!session) return null;
 
-  const status = STATUS_META[session.workflowStatus];
+  const status = STATUS_META[session.workflowStatus] || STATUS_META.running;
 
   return (
-    <section className="request-overview">
-      <div className="request-overview__header">
-        <div>
-          <div className="request-overview__label">Current Request</div>
-
-          <h2 className="request-overview__query">{session.query}</h2>
+    <section className="bg-slate-50 dark:bg-gray-800/10 border border-gray-200 dark:border-gray-800 rounded-xl p-3.5 w-full min-w-0 flex flex-col select-none">
+      <div className="flex items-start justify-between gap-3 w-full min-w-0">
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">
+            Current Request
+          </div>
+          <h2 
+            className="text-sm font-bold text-gray-850 dark:text-gray-200 truncate select-text leading-snug" 
+            title={session.query}
+          >
+            {session.query}
+          </h2>
         </div>
 
         <div
-          className="request-overview__status"
-          style={{
-            background: `${status.color}20`,
-            color: status.color,
-          }}
+          className={`flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-bold select-none whitespace-nowrap flex-shrink-0 ${status.bgColor} ${status.textColor} ${status.borderColor}`}
         >
-          <span
-            className="request-overview__status-dot"
-            style={{
-              background: status.color,
-            }}
-          />
-
-          {status.label}
+          <span className={`w-1.5 h-1.5 rounded-full ${status.dotColor}`} />
+          {status.label.toUpperCase()}
         </div>
       </div>
 
-      <div className="request-overview__grid">
-        <div className="request-overview__item">
-          <span className="request-overview__item-label">Current Stage</span>
-
-          <span className="request-overview__item-value">
+      <div className="grid grid-cols-2 gap-2 mt-3 w-full min-w-0">
+        <div className="flex flex-col bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800/60 p-2 rounded-lg min-w-0">
+          <span className="text-[9px] font-semibold text-gray-450 dark:text-gray-500 uppercase select-none mb-0.5">
+            Stage
+          </span>
+          <span className="text-[11px] font-bold text-gray-750 dark:text-gray-200 truncate" title={getCurrentStage(session)}>
             {getCurrentStage(session)}
           </span>
         </div>
 
-        <div className="request-overview__item">
-          <span className="request-overview__item-label">Risk</span>
-
-          <span className="request-overview__item-value">
-            {getRisk(session)}
+        <div className="flex flex-col bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800/60 p-2 rounded-lg min-w-0 justify-between">
+          <span className="text-[9px] font-semibold text-gray-455 dark:text-gray-500 uppercase select-none mb-1">
+            Risk
           </span>
+          <div className="flex items-center min-w-0">
+            <RiskBadge session={session} />
+          </div>
         </div>
 
-        <div className="request-overview__item">
-          <span className="request-overview__item-label">Started</span>
-
-          <span className="request-overview__item-value">
+        <div className="flex flex-col bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800/60 p-2 rounded-lg min-w-0">
+          <span className="text-[9px] font-semibold text-gray-450 dark:text-gray-550 uppercase select-none mb-0.5">
+            Started
+          </span>
+          <span className="text-[11px] font-bold text-gray-755 dark:text-gray-200">
             {session.timestamp.toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -120,10 +133,11 @@ export default function RequestOverview({ session }: Props) {
           </span>
         </div>
 
-        <div className="request-overview__item">
-          <span className="request-overview__item-label">Steps Completed</span>
-
-          <span className="request-overview__item-value">
+        <div className="flex flex-col bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800/60 p-2 rounded-lg min-w-0">
+          <span className="text-[9px] font-semibold text-gray-450 dark:text-gray-550 uppercase select-none mb-0.5">
+            Steps Completed
+          </span>
+          <span className="text-[11px] font-bold text-gray-755 dark:text-gray-200">
             {session.steps.length}
           </span>
         </div>

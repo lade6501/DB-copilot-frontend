@@ -1,163 +1,165 @@
-import { useEffect, useRef, useState } from "react";
-
-import { QueryInput } from "./QueryInput";
-import { StepCard } from "../components/steps_card/StepCard";
-import { useWebSocket } from "../hooks/useWebSocket";
-import ResultPanel from "./result_panel/ResultPanel";
-import RequestOverview from "./requestoverview/RequestOverview";
+import { useState, useRef } from "react";
 import { Sidebar } from "./Sidebar";
+import { QueryInput } from "./QueryInput";
+import ResultPanel from "./result_panel/ResultPanel";
+import AgentPanel from "./AgentPanel";
+import { useWebSocket } from "../hooks/useWebSocket";
 import { useApprovalPolling } from "../hooks/useApprovalPolling";
-import { workflowToSteps } from "../utils/workflowMapper";
-
-const BUSINESS_STATUS_MAP: Record<string, string> = {
-  start: "Securing database connection...",
-  interpret: "Understanding your question...",
-  plan: "Scanning database schema...",
-  generate_query: "Translating to database language...",
-  validate: "Running security checks...",
-  execute: "Fetching your records...",
-  summary: "Formatting the final report...",
-};
 
 export default function Home() {
   const {
-  sessions,
-  setSessions,
-  activeSessionId,
-  setActiveSessionId,
-  activeSession,
-  isConnecting,
-  sendQuery,
-} = useWebSocket(); 
+    sessions,
+    setSessions,
+    activeSessionId,
+    setActiveSessionId,
+    activeSession,
+    isConnecting,
+    sendQuery,
+  } = useWebSocket();
 
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [devMode, setDevMode] = useState(true);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-  const stepsEndRef = useRef<HTMLDivElement>(null);
-  const inputBarRef = useRef<HTMLDivElement>(null);
+  const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(false);
+  const [isAgentCollapsed, setIsAgentCollapsed] = useState(false);
+  const [agentWidth, setAgentWidth] = useState(320);
+
   const isRunning = activeSession?.status === "running" || isConnecting;
 
   useApprovalPolling({
     approvalId: activeSession?.approvalId,
     enabled: activeSession?.polling ?? false,
-
     onCompleted: (approval) => {
-      const workflow = approval.workflow_state;
-
       setSessions((prev) =>
         prev.map((session) => {
-          if (session.id !== activeSession?.id) {
-            return session;
+          if (session.id !== activeSession?.id) return session;
+
+          const updatedSteps = [...session.steps];
+          const hasApproved = approval.status.toLowerCase() === "approved";
+          const targetStep = hasApproved
+            ? ("approval_approved" as const)
+            : ("approval_rejected" as const);
+
+          const existingIdx = updatedSteps.findIndex(
+            (st) => st.step === targetStep,
+          );
+
+          const approvalStep = {
+            step: targetStep,
+            status: "completed" as const,
+            message: `Approval request was ${approval.status.toLowerCase()}`,
+            timestamp: new Date().toISOString(),
+          };
+
+          if (existingIdx >= 0) {
+            updatedSteps[existingIdx] = approvalStep;
+          } else {
+            updatedSteps.push(approvalStep);
           }
 
           return {
             ...session,
-
             polling: false,
-
-            approval: approval,
-
-            workflowStatus:
-              approval.status === "EXECUTED"
-                ? "completed"
-                : approval.status === "REJECTED"
-                  ? "rejected"
-                  : "failed",
-
-            status: approval.status === "EXECUTED" ? "completed" : "error",
-
-            steps: workflowToSteps(workflow, approval.status),
-
-            result: workflow.result ?? session.result,
+            workflowStatus: hasApproved ? "approved" : "rejected",
+            status: hasApproved ? "running" : "error",
+            steps: updatedSteps,
           };
         }),
       );
     },
   });
 
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
+  const isResizingRef = useRef(false);
 
-  useEffect(() => {
-    if (!inputBarRef.current) return;
-    const ro = new ResizeObserver((entries) => {
-      const h = entries[0].borderBoxSize[0].blockSize;
-      inputBarRef.current?.parentElement?.style.setProperty(
-        "--input-bar-height",
-        `${h}px`,
-      );
-    });
-    ro.observe(inputBarRef.current);
-    return () => ro.disconnect();
-  }, []);
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizingRef.current = true;
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
 
-  useEffect(() => {
-    stepsEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeSession?.steps.length, devMode]);
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizingRef.current) return;
+    const newWidth = window.innerWidth - e.clientX;
+    if (newWidth >= 245 && newWidth <= 600) {
+      setAgentWidth(newWidth);
+    }
+  };
 
-  const rawVisibleSteps = (activeSession?.steps ?? []).filter(
-    (s) => s.step !== "done",
-  );
+  const handleMouseUp = () => {
+    isResizingRef.current = false;
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
+  };
 
-  const displaySteps = rawVisibleSteps;
-
-  const summaryStep = activeSession?.steps.find((s) => s.step === "summary");
-  const naturalSummary = summaryStep?.summary?.natural_summary;
-
-  const latestStep = rawVisibleSteps[rawVisibleSteps.length - 1];
-  const activeStep = latestStep?.step || "start";
-  const friendlyMessage = BUSINESS_STATUS_MAP[activeStep] || "Processing...";
-
-  const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("access_token");
-    setIsProfileMenuOpen(false);
-    window.location.href = "/auth";
+  const toggleTheme = () => {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    if (nextTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   };
 
   return (
-    <div className="app">
-      <header className="topbar">
-        <div className="topbar__left">
-          <div className="topbar__logo">
-            <div className="topbar__logo-icon">⚡</div>
-            DB Copilot
+    <div className="h-screen w-screen flex flex-col bg-white dark:bg-gray-900 overflow-hidden font-sans transition-colors duration-200">
+      <header className="flex items-center justify-between px-6 py-2.5 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 select-none">
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
           </div>
-          <div className="topbar__status">
-            <span className="topbar__status-dot" />
-            ws://localhost:8000
+          <span className="font-bold text-base text-gray-850 dark:text-white tracking-wide">
+            DB Copilot
+          </span>
+          <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 px-2 py-0.5 rounded-full">
+            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 font-mono">
+              ws://localhost:8000
+            </span>
           </div>
         </div>
 
-        <div className="topbar__right">
-          <div className="mode-toggle">
-            <span
-              className={`mode-toggle__label ${!devMode ? "mode-toggle__label--active" : ""}`}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-0.5 rounded-full text-xs font-semibold select-none">
+            <button
+              onClick={() => setDevMode(false)}
+              className={`px-3 py-1 rounded-full transition-all duration-200 cursor-pointer ${
+                !devMode
+                  ? "bg-white dark:bg-gray-700 text-gray-800 dark:text-white shadow-sm"
+                  : "text-gray-450 hover:text-gray-700 dark:hover:text-gray-300"
+              }`}
             >
               Business
-            </span>
-            <button
-              className={`mode-switch ${devMode ? "mode-switch--on" : ""}`}
-              onClick={() => setDevMode(!devMode)}
-              aria-label="Toggle Developer Mode"
-            >
-              <span className="mode-switch__thumb" />
             </button>
-            <span
-              className={`mode-toggle__label ${devMode ? "mode-toggle__label--active" : ""}`}
+            <button
+              onClick={() => setDevMode(true)}
+              className={`px-3 py-1 rounded-full transition-all duration-200 cursor-pointer ${
+                devMode
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-gray-450 hover:text-gray-700 dark:hover:text-gray-300"
+              }`}
             >
               Developer
-            </span>
+            </button>
           </div>
 
-          <div className="topbar__divider" />
-
           <button
-            className="theme-toggle"
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            aria-label="Toggle theme"
+            onClick={toggleTheme}
+            className="p-2 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-pointer transition-colors"
+            title={theme === "light" ? "Dark Mode" : "Light Mode"}
           >
             {theme === "light" ? (
               <svg
@@ -167,6 +169,8 @@ export default function Home() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
               </svg>
@@ -178,6 +182,8 @@ export default function Home() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
                 <circle cx="12" cy="12" r="5" />
                 <line x1="12" y1="1" x2="12" y2="3" />
@@ -186,19 +192,16 @@ export default function Home() {
                 <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
                 <line x1="1" y1="12" x2="3" y2="12" />
                 <line x1="21" y1="12" x2="23" y2="12" />
-                <line x1="4.22" y1="19.22" x2="5.64" y2="17.76" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
               </svg>
             )}
           </button>
 
-          <div className="topbar__divider" />
-
-          <div className="profile-menu-wrap">
+          <div className="relative">
             <button
-              className="profile-btn"
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              aria-label="Profile menu"
+              className="p-2 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-pointer transition-colors"
             >
               <svg
                 width="16"
@@ -210,127 +213,81 @@ export default function Home() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
               </svg>
             </button>
-
             {isProfileMenuOpen && (
-              <div className="profile-dropdown">
-                <button
-                  className="profile-dropdown-item"
-                  onClick={() => setIsProfileMenuOpen(false)}
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-150 dark:border-gray-700 py-1 z-50">
+                <a
+                  href="#"
+                  className="block px-4 py-2 text-xs text-gray-700 dark:text-gray-250 hover:bg-gray-50 dark:hover:bg-gray-700 font-semibold"
                 >
-                  View Profile
-                </button>
-                <button
-                  className="profile-dropdown-item danger"
-                  onClick={handleLogout}
+                  Your Profile
+                </a>
+                <a
+                  href="#"
+                  className="block px-4 py-2 text-xs text-gray-700 dark:text-gray-250 hover:bg-gray-50 dark:hover:bg-gray-700 font-semibold"
                 >
-                  Logout
-                </button>
+                  Settings
+                </a>
+                <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                <a
+                  href="#"
+                  className="block px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 font-semibold"
+                >
+                  Sign out
+                </a>
               </div>
             )}
           </div>
         </div>
       </header>
 
-      <Sidebar
-        sessions={sessions}
-        activeSessionId={activeSessionId}
-        onSelect={setActiveSessionId}
-        onClear={() => {
-          // we'll implement later
-        }}
-      />
+      <div className="flex-1 flex min-h-0 relative w-full">
+        <Sidebar
+          sessions={sessions}
+          activeSessionId={activeSessionId}
+          onSelect={setActiveSessionId}
+          onClear={() => setSessions([])}
+          isCollapsed={isHistoryCollapsed}
+          onToggleCollapse={() => setIsHistoryCollapsed(!isHistoryCollapsed)}
+        />
 
-      <main className="main">
-        {isRunning && <div className="running-bar" />}
+        <main className="flex-1 min-w-0 flex flex-col bg-slate-50 dark:bg-gray-950 p-4 md:p-6 gap-4 h-full overflow-hidden">
+          <div className="flex-shrink-0">
+            <QueryInput
+              onSubmit={sendQuery}
+              loading={isRunning}
+              connected={!isConnecting}
+            />
+          </div>
 
-        {activeSession && <RequestOverview session={activeSession} />}
+          <div className="flex-1 min-h-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm overflow-hidden flex flex-col">
+            {isRunning && (
+              <div className="h-1 w-full bg-indigo-500 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] flex-shrink-0" />
+            )}
+            <div className="flex-1 min-h-0 relative">
+              <ResultPanel session={activeSession} />
+            </div>
+          </div>
+        </main>
 
-        <div
-          className="main__steps"
-          style={{ bottom: "var(--input-bar-height, 140px)" }}
-        >
-          {rawVisibleSteps.length === 0 ? (
-            isRunning ? (
-              <div className="business-canvas">
-                <div className="business-pulse-ring">
-                  <div className="business-pulse-core">⚡</div>
-                </div>
-                <h3 className="business-canvas__title">Initializing</h3>
-                <p className="business-canvas__subtitle">
-                  Connecting to database...
-                </p>
-              </div>
-            ) : (
-              <div className="empty-state">
-                <div className="empty-state__icon">🔍</div>
-                <div className="empty-state__title">
-                  Ask your database anything
-                </div>
-                <div className="empty-state__sub">
-                  Type a query below. Use Developer Mode to see the underlying
-                  SQL generation.
-                </div>
-              </div>
-            )
-          ) : (
-            <>
-              {!devMode ? (
-                isRunning ? (
-                  <div className="business-canvas">
-                    <div className="business-pulse-ring">
-                      <div className="business-pulse-core">⚡</div>
-                    </div>
-                    <h3 className="business-canvas__title">Analyzing Data</h3>
-                    <p className="business-canvas__subtitle">
-                      {friendlyMessage}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="business-canvas business-canvas--success">
-                    <div className="business-pulse-ring business-pulse-ring--success">
-                      <div className="business-pulse-core">✓</div>
-                    </div>
-                    <h3 className="business-canvas__title">
-                      Analysis Complete
-                    </h3>
-                    <p className="business-canvas__subtitle">
-                      {activeSession?.result
-                        ? `Successfully retrieved ${activeSession.result.rows_returned} rows.`
-                        : "Query executed successfully."}
-                    </p>
-
-                    {naturalSummary && (
-                      <div className="business-canvas__prose">
-                        {naturalSummary}
-                      </div>
-                    )}
-                  </div>
-                )
-              ) : (
-                displaySteps.map((step, i) => (
-                  <StepCard key={`${step.step}-${i}`} step={step} index={i} />
-                ))
-              )}
-            </>
-          )}
-
-          <div ref={stepsEndRef} />
-        </div>
-
-        <div className="input-bar" ref={inputBarRef}>
-          <QueryInput
-            onSubmit={sendQuery}
-            loading={isRunning}
-            connected={!isConnecting}
+        {!isAgentCollapsed && (
+          <div
+            className="w-[3px] hover:w-[6px] hover:bg-indigo-500/50 bg-gray-200/50 dark:bg-gray-800/80 cursor-col-resize transition-all self-stretch z-10 flex-shrink-0"
+            onMouseDown={handleMouseDown}
           />
-        </div>
-      </main>
+        )}
 
-      <ResultPanel session={activeSession} />
+        <AgentPanel
+          session={activeSession}
+          isRunning={isRunning}
+          isCollapsed={isAgentCollapsed}
+          onToggleCollapse={() => setIsAgentCollapsed(!isAgentCollapsed)}
+          width={agentWidth}
+        />
+      </div>
     </div>
   );
 }

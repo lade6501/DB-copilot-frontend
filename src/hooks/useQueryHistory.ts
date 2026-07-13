@@ -5,14 +5,14 @@ export function useQueryHistory() {
   const [history, setHistory] = useState<QuerySession[]>([]);
 
   const addHistory = useCallback(
-    (query: string, success: boolean, rowCount?: number) => {
+    (query: string, success: boolean) => {
       const entry: QuerySession = {
         id: crypto.randomUUID(),
         query,
         timestamp: new Date(),
-        rowCount,
         success,
-        status: "completed",
+        status: success ? "completed" : "error",
+        workflowStatus: success ? "completed" : "failed",
         steps: [],
       };
       setHistory((prev) => [entry, ...prev].slice(0, 20));

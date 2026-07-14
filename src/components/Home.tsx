@@ -1,10 +1,13 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Sidebar } from "./Sidebar";
 import { QueryInput } from "./QueryInput";
 import ResultPanel from "./result_panel/ResultPanel";
 import AgentPanel from "./AgentPanel";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { useApprovalPolling } from "../hooks/useApprovalPolling";
+import apiClient from "../api/apiClient";
+import { tokenStorage } from "../utils/tokenStorage";
+import type { User } from "../types";
 
 export default function Home() {
   const {
@@ -20,10 +23,21 @@ export default function Home() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [devMode, setDevMode] = useState(true);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(false);
   const [isAgentCollapsed, setIsAgentCollapsed] = useState(false);
   const [agentWidth, setAgentWidth] = useState(320);
+
+  useEffect(() => {
+    apiClient.get<User>("/auth/me")
+      .then((res) => {
+        setUser(res.data);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch user from BE:", err);
+      });
+  }, []);
 
   const isRunning = activeSession?.status === "running" || isConnecting;
 
@@ -218,26 +232,60 @@ export default function Home() {
               </svg>
             </button>
             {isProfileMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-150 dark:border-gray-700 py-1 z-50">
-                <a
-                  href="#"
-                  className="block px-4 py-2 text-xs text-gray-700 dark:text-gray-250 hover:bg-gray-50 dark:hover:bg-gray-700 font-semibold"
-                >
-                  Your Profile
-                </a>
-                <a
-                  href="#"
-                  className="block px-4 py-2 text-xs text-gray-700 dark:text-gray-250 hover:bg-gray-50 dark:hover:bg-gray-700 font-semibold"
-                >
-                  Settings
-                </a>
-                <hr className="my-1 border-gray-200 dark:border-gray-700" />
-                <a
-                  href="#"
-                  className="block px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 font-semibold"
-                >
-                  Sign out
-                </a>
+              <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-150 dark:border-gray-700 p-4 z-50 flex flex-col items-center text-center animate-in fade-in slide-in-from-top-2 duration-150 select-none">
+                <div className="relative w-14 h-14 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-650 p-0.5 shadow-md flex items-center justify-center mb-3">
+                  <div className="w-full h-full bg-indigo-50 dark:bg-gray-700 rounded-full flex items-center justify-center font-bold text-lg text-indigo-600 dark:text-indigo-350">
+                    {(user?.username?.[0] ?? "V").toUpperCase()}
+                  </div>
+                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-gray-800 rounded-full" />
+                </div>
+
+                <h3 className="text-sm font-bold text-gray-805 dark:text-gray-100 leading-none">
+                  {user?.username ?? "Vishal"}
+                </h3>
+                <span className="text-[10px] text-gray-450 dark:text-gray-400 font-semibold uppercase tracking-wider mt-1 select-none">
+                  {user?.role ?? "Lead Database Administrator"}
+                </span>
+                
+                <hr className="w-full border-gray-100 dark:border-gray-700/80 my-3" />
+
+                <div className="w-full space-y-2 text-left mb-4 text-[11px]">
+                  <div className="flex justify-between items-center text-gray-500 dark:text-gray-400">
+                    <span>Email</span>
+                    <span className="font-semibold text-gray-800 dark:text-gray-200">
+                      {(user as any)?.email ?? `${(user?.username ?? "vishal").toLowerCase()}@company.com`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-gray-500 dark:text-gray-400">
+                    <span>Role Privileges</span>
+                    <span className="font-mono bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.2 rounded border border-emerald-150 dark:border-emerald-900/30 font-bold">
+                      {user?.role?.toUpperCase() === "ADMIN" ? "SUPERUSER" : "DEVELOPER"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-gray-500 dark:text-gray-400">
+                    <span>Active Zone</span>
+                    <span className="font-semibold text-gray-850 dark:text-gray-205">Developer Console</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 w-full mt-1.5 border-t border-gray-100 dark:border-gray-755 pt-3">
+                  <button 
+                    onClick={() => {
+                      tokenStorage.clearTokens();
+                      setIsProfileMenuOpen(false);
+                      window.dispatchEvent(new Event("session-expired"));
+                    }}
+                    className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-955/20 dark:hover:bg-rose-900/10 border border-rose-100 dark:border-rose-900/35 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-400 cursor-pointer transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                  <button 
+                    onClick={() => setIsProfileMenuOpen(false)}
+                    className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-805 border border-gray-200 dark:border-gray-700 rounded-lg text-[10px] font-bold text-gray-700 dark:text-gray-300 cursor-pointer transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             )}
           </div>

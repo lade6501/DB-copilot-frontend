@@ -30,6 +30,24 @@ const STATUS_LABELS: Record<WorkflowStatus, string> = {
   rejected: "Rejected",
 };
 
+const getStatusBadgeStyle = (status: WorkflowStatus) => {
+  switch (status) {
+    case "running":
+    case "executing":
+      return "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/30";
+    case "awaiting_approval":
+      return "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30";
+    case "approved":
+    case "completed":
+      return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30";
+    case "failed":
+    case "rejected":
+      return "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30";
+    default:
+      return "bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700/30";
+  }
+};
+
 export function Sidebar({
   sessions,
   activeSessionId,
@@ -58,12 +76,12 @@ export function Sidebar({
       <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-800 min-h-[53px] flex-shrink-0">
         {!isCollapsed && (
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold tracking-wider text-gray-400 dark:text-gray-500 uppercase select-none">
+            <span className="text-xs font-bold tracking-wider text-gray-400 dark:text-gray-550 uppercase select-none">
               History
             </span>
             {sessions.length > 0 && (
               <button 
-                className="text-[10px] bg-gray-105 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                className="text-[10px] bg-gray-100 hover:bg-gray-205 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white px-1.5 py-0.5 rounded transition-colors cursor-pointer"
                 onClick={onClear}
               >
                 Clear
@@ -97,7 +115,7 @@ export function Sidebar({
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-1.5 min-w-0">
         {sessions.length === 0 ? (
-          <div className="text-center text-xs text-gray-400 dark:text-gray-550 py-8 select-none">
+          <div className="text-center text-xs text-gray-400 dark:text-gray-500 py-8 select-none">
             {!isCollapsed ? "No requests yet" : "—"}
           </div>
         ) : (
@@ -111,7 +129,7 @@ export function Sidebar({
                   key={session.id}
                   className={`group relative flex items-center justify-center h-9 w-9 rounded-lg cursor-pointer border transition-all duration-200 mx-auto ${
                     isActive
-                      ? "bg-indigo-55 dark:bg-indigo-950/20 border-indigo-505 dark:border-indigo-400"
+                      ? "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-500 dark:border-indigo-400"
                       : "border-transparent hover:bg-gray-100 dark:hover:bg-gray-800/60"
                   }`}
                   onClick={() => onSelect(session.id)}
@@ -142,23 +160,21 @@ export function Sidebar({
                 }`}
                 onClick={() => onSelect(session.id)}
               >
-                <div className="flex items-start gap-2 mb-2 min-w-0">
-                  <span
-                    className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                      session.status === "running" ? "animate-pulse" : ""
-                    }`}
-                    style={{ backgroundColor: statusColor }}
-                  />
-                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate leading-tight flex-1">
-                    {session.query}
+                <div className="flex items-center justify-between gap-2 mb-1.5 w-full min-w-0 flex-shrink-0">
+                  <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider select-none ${getStatusBadgeStyle(session.workflowStatus)}`}>
+                    {STATUS_LABELS[session.workflowStatus] || "UNKNOWN"}
+                  </span>
+                  <span className="text-[9px] font-semibold text-gray-400 dark:text-gray-500 uppercase select-none font-medium">
+                    {formatTime(session.timestamp)}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between mt-auto pt-1 gap-1 border-t border-gray-100/50 dark:border-gray-800/50 flex-shrink-0">
-                  <span className="text-[9px] font-semibold text-gray-400 uppercase select-none">
-                    {formatTime(session.timestamp)}
-                  </span>
-                  
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate leading-tight w-full select-text mb-2">
+                  {session.query}
+                </span>
+
+                <div className="flex items-center justify-between mt-auto pt-1.5 border-t border-gray-100/50 dark:border-gray-800/50 flex-shrink-0">
+                  <span className="text-[9px] font-bold text-gray-400 uppercase select-none">Risk</span>
                   <div className="flex items-center flex-shrink-0">
                     <RiskBadge session={session} />
                   </div>

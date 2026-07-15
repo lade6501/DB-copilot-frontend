@@ -2,9 +2,10 @@ import type { QueryResult } from "../../types";
 
 interface Props {
   result: QueryResult;
+  devMode?: boolean;
 }
 
-export default function CrudActionCard({ result }: Props) {
+export default function CrudActionCard({ result, devMode = true }: Props) {
   const getIcon = () => {
     switch (result.action) {
       case "write":
@@ -32,12 +33,12 @@ export default function CrudActionCard({ result }: Props) {
   };
 
   return (
-    <div className="p-6 max-w-2xl w-full mx-auto bg-white dark:bg-gray-900 rounded-xl border border-gray-150 dark:border-gray-800 shadow-[0_2px_8px_rgba(0,0,0,0.015)] my-6 select-none animate-in fade-in slide-in-from-bottom-2 duration-155">
+    <div className="p-6 max-w-2xl w-full mx-auto bg-white dark:bg-gray-900 rounded-xl border border-gray-150 dark:border-gray-800 shadow-[0_2px_8px_rgba(0,0,0,0.015)] my-6 select-none animate-in fade-in slide-in-from-bottom-2 duration-150">
       <div className="w-12 h-12 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center text-xl mb-4">
         {getIcon()}
       </div>
 
-      <h2 className="text-lg font-bold text-gray-850 dark:text-gray-100 mb-1">
+      <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-1">
         {getTitle()}
       </h2>
 
@@ -45,38 +46,40 @@ export default function CrudActionCard({ result }: Props) {
         {result.message}
       </p>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className={`grid gap-4 mb-6 ${devMode ? "grid-cols-3" : "grid-cols-2"}`}>
         <div className="bg-slate-50 dark:bg-gray-800/30 border border-gray-150 dark:border-gray-800/60 p-4 rounded-xl flex flex-col">
-          <span className="text-[9px] font-bold text-gray-400 dark:text-gray-505 uppercase tracking-wide mb-1">
+          <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">
             Entity
           </span>
-          <strong className="text-sm font-bold text-gray-750 dark:text-gray-200 truncate" title={result.entity}>
+          <strong className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate" title={result.entity}>
             {result.entity}
           </strong>
         </div>
 
         <div className="bg-slate-50 dark:bg-gray-800/30 border border-gray-150 dark:border-gray-800/60 p-4 rounded-xl flex flex-col">
-          <span className="text-[9px] font-bold text-gray-400 dark:text-gray-505 uppercase tracking-wide mb-1">
+          <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">
             Rows Affected
           </span>
-          <strong className="text-sm font-bold text-gray-755 dark:text-gray-200">
+          <strong className="text-sm font-bold text-gray-700 dark:text-gray-200">
             {result.rows_affected}
           </strong>
         </div>
 
-        <div className="bg-slate-50 dark:bg-gray-800/30 border border-gray-150 dark:border-gray-800/60 p-4 rounded-xl flex flex-col">
-          <span className="text-[9px] font-bold text-gray-400 dark:text-gray-505 uppercase tracking-wide mb-1">
-            Execution Time
-          </span>
-          <strong className="text-sm font-bold text-gray-755 dark:text-gray-200">
-            {result.execution_time}s
-          </strong>
-        </div>
+        {devMode && (
+          <div className="bg-slate-50 dark:bg-gray-800/30 border border-gray-150 dark:border-gray-800/60 p-4 rounded-xl flex flex-col">
+            <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">
+              Execution Time
+            </span>
+            <strong className="text-sm font-bold text-gray-700 dark:text-gray-205">
+              {result.execution_time}s
+            </strong>
+          </div>
+        )}
       </div>
 
       {result.affected_ids.length > 0 && (
         <div className="mb-6">
-          <h4 className="text-xs font-bold text-gray-450 dark:text-gray-550 uppercase tracking-wider mb-2">
+          <h4 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
             Affected IDs
           </h4>
           <div className="flex flex-wrap gap-2">
@@ -92,14 +95,16 @@ export default function CrudActionCard({ result }: Props) {
         </div>
       )}
 
-      <div className="mt-6">
-        <h4 className="text-xs font-bold text-gray-450 dark:text-gray-555 uppercase tracking-wider mb-2">
-          Executed Query
-        </h4>
-        <pre className="border border-gray-200 dark:border-gray-800 rounded-lg bg-slate-900 text-slate-100 font-mono text-xs p-4 leading-relaxed overflow-x-auto whitespace-pre block select-text scrollbar-thin max-w-full">
-          <code>{result.executed_query}</code>
-        </pre>
-      </div>
+      {devMode && (
+        <div className="mt-6">
+          <h4 className="text-xs font-bold text-gray-450 dark:text-gray-500 uppercase tracking-wider mb-2">
+            Executed Query
+          </h4>
+          <pre className="border border-gray-200 dark:border-gray-800 rounded-lg bg-slate-900 text-slate-100 font-mono text-xs p-4 leading-relaxed overflow-x-auto whitespace-pre block select-text scrollbar-thin max-w-full">
+            <code>{result.executed_query}</code>
+          </pre>
+        </div>
+      )}
     </div>
   );
 }

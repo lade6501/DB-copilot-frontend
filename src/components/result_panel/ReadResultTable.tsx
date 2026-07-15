@@ -9,10 +9,9 @@ export default function ReadResultTable({ result }: Props) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Header Info */}
       <div className="flex items-center justify-between p-4 border-b border-gray-150 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 flex-shrink-0 select-none">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-bold text-gray-800 dark:text-gray-250">Query Results</h3>
+          <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">Query Results</h3>
           <span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 dark:bg-indigo-950/20 dark:text-indigo-400 px-2 py-0.5 rounded-full select-none">
             {result.rows_returned} row{result.rows_returned !== 1 && "s"}
           </span>
@@ -35,10 +34,9 @@ export default function ReadResultTable({ result }: Props) {
         </div>
       </div>
 
-      {/* Table Area scrollable */}
       <div className="flex-1 overflow-auto">
         <table className="result-table w-full text-left border-collapse">
-          <thead className="sticky top-0 bg-slate-50 dark:bg-gray-850 z-10 border-b border-gray-200 dark:border-gray-800 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
+          <thead className="sticky top-0 bg-slate-50 dark:bg-gray-800 z-10 border-b border-gray-200 dark:border-gray-800 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
             <tr>
               {columns.map((column) => (
                 <th 

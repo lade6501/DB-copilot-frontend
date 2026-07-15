@@ -268,14 +268,14 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 w-full mt-1.5 border-t border-gray-100 dark:border-gray-755 pt-3">
+                <div className="grid grid-cols-2 gap-2 w-full mt-1.5 border-t border-gray-100 dark:border-gray-700 pt-3">
                   <button 
                     onClick={() => {
                       tokenStorage.clearTokens();
                       setIsProfileMenuOpen(false);
                       window.dispatchEvent(new Event("session-expired"));
                     }}
-                    className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-955/20 dark:hover:bg-rose-900/10 border border-rose-100 dark:border-rose-900/35 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-400 cursor-pointer transition-colors"
+                    className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-900/10 border border-rose-100 dark:border-rose-900/35 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-400 cursor-pointer transition-colors"
                   >
                     Sign Out
                   </button>
@@ -316,25 +316,27 @@ export default function Home() {
               <div className="h-1 w-full bg-indigo-500 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] flex-shrink-0" />
             )}
             <div className="flex-1 min-h-0 relative">
-              <ResultPanel session={activeSession} />
+              <ResultPanel session={activeSession} devMode={devMode} />
             </div>
           </div>
         </main>
 
-        {!isAgentCollapsed && (
+        {!isAgentCollapsed && devMode && (
           <div
             className="w-[3px] hover:w-[6px] hover:bg-indigo-500/50 bg-gray-200/50 dark:bg-gray-800/80 cursor-col-resize transition-all self-stretch z-10 flex-shrink-0"
             onMouseDown={handleMouseDown}
           />
         )}
 
-        <AgentPanel
-          session={activeSession}
-          isRunning={isRunning}
-          isCollapsed={isAgentCollapsed}
-          onToggleCollapse={() => setIsAgentCollapsed(!isAgentCollapsed)}
-          width={agentWidth}
-        />
+        {devMode && (
+          <AgentPanel
+            session={activeSession}
+            isRunning={isRunning}
+            isCollapsed={isAgentCollapsed}
+            onToggleCollapse={() => setIsAgentCollapsed(!isAgentCollapsed)}
+            width={agentWidth}
+          />
+        )}
       </div>
     </div>
   );

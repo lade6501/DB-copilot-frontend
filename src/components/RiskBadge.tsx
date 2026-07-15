@@ -67,14 +67,14 @@ export function RiskBadge({ session, risk }: RiskBadgeProps) {
   } else if (normalized === "critical" || normalized === "critical risk") {
     dotColor = "bg-red-600 animate-pulse";
     textColor = "text-red-700 dark:text-red-400";
-    bgColor = "bg-red-55 dark:bg-red-955/20";
+    bgColor = "bg-red-50 dark:bg-red-950/20";
     borderColor = "border-red-300 dark:border-red-900/30";
     label = "CRITICAL";
   } else if (normalized === "unknown") {
     if (session && (session.status === "running" || session.workflowStatus === "running")) {
       dotColor = "bg-slate-400 animate-pulse";
       textColor = "text-slate-500";
-      bgColor = "bg-slate-55/50 dark:bg-slate-900/20";
+      bgColor = "bg-slate-50/50 dark:bg-slate-900/20";
       borderColor = "border-slate-200 dark:border-slate-800";
       label = "EVALUATING";
     } else {

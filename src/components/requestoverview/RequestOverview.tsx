@@ -25,7 +25,7 @@ const STATUS_META: Record<
   awaiting_approval: {
     label: "Awaiting Approval",
     bgColor: "bg-amber-50 dark:bg-amber-950/20",
-    textColor: "text-amber-700 dark:text-amber-450",
+    textColor: "text-amber-700 dark:text-amber-400",
     borderColor: "border-amber-200 dark:border-amber-900/30",
     dotColor: "bg-amber-500 animate-pulse",
   },
@@ -48,21 +48,21 @@ const STATUS_META: Record<
     bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
     textColor: "text-emerald-700 dark:text-emerald-400",
     borderColor: "border-emerald-200 dark:border-emerald-900/30",
-    dotColor: "bg-emerald-505",
+    dotColor: "bg-emerald-500",
   },
   failed: {
     label: "Failed",
-    bgColor: "bg-rose-50 dark:bg-rose-955/20",
-    textColor: "text-rose-700 dark:text-rose-455",
+    bgColor: "bg-rose-50 dark:bg-rose-950/20",
+    textColor: "text-rose-700 dark:text-rose-400",
     borderColor: "border-rose-200 dark:border-rose-900/30",
-    dotColor: "bg-rose-505",
+    dotColor: "bg-rose-500",
   },
   rejected: {
     label: "Rejected",
-    bgColor: "bg-rose-50 dark:bg-rose-955/20",
-    textColor: "text-rose-700 dark:text-rose-455",
+    bgColor: "bg-rose-50 dark:bg-rose-950/20",
+    textColor: "text-rose-700 dark:text-rose-400",
     borderColor: "border-rose-200 dark:border-rose-900/30",
-    dotColor: "bg-rose-505",
+    dotColor: "bg-rose-500",
   },
 };
 
@@ -87,7 +87,7 @@ export default function RequestOverview({ session }: Props) {
             Current Request
           </div>
           <h2 
-            className="text-sm font-bold text-gray-850 dark:text-gray-200 truncate select-text leading-snug" 
+            className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate select-text leading-snug" 
             title={session.query}
           >
             {session.query}
@@ -104,16 +104,16 @@ export default function RequestOverview({ session }: Props) {
 
       <div className="grid grid-cols-2 gap-2 mt-3 w-full min-w-0">
         <div className="flex flex-col bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800/60 p-2 rounded-lg min-w-0">
-          <span className="text-[9px] font-semibold text-gray-450 dark:text-gray-500 uppercase select-none mb-0.5">
+          <span className="text-[9px] font-semibold text-gray-400 dark:text-gray-500 uppercase select-none mb-0.5">
             Stage
           </span>
-          <span className="text-[11px] font-bold text-gray-750 dark:text-gray-200 truncate" title={getCurrentStage(session)}>
+          <span className="text-[11px] font-bold text-gray-700 dark:text-gray-200 truncate" title={getCurrentStage(session)}>
             {getCurrentStage(session)}
           </span>
         </div>
 
         <div className="flex flex-col bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800/60 p-2 rounded-lg min-w-0 justify-between">
-          <span className="text-[9px] font-semibold text-gray-455 dark:text-gray-500 uppercase select-none mb-1">
+          <span className="text-[9px] font-semibold text-gray-400 dark:text-gray-500 uppercase select-none mb-1">
             Risk
           </span>
           <div className="flex items-center min-w-0">
@@ -122,10 +122,10 @@ export default function RequestOverview({ session }: Props) {
         </div>
 
         <div className="flex flex-col bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800/60 p-2 rounded-lg min-w-0">
-          <span className="text-[9px] font-semibold text-gray-450 dark:text-gray-550 uppercase select-none mb-0.5">
+          <span className="text-[9px] font-semibold text-gray-400 dark:text-gray-500 uppercase select-none mb-0.5">
             Started
           </span>
-          <span className="text-[11px] font-bold text-gray-755 dark:text-gray-200">
+          <span className="text-[11px] font-bold text-gray-700 dark:text-gray-200">
             {session.timestamp.toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -134,10 +134,10 @@ export default function RequestOverview({ session }: Props) {
         </div>
 
         <div className="flex flex-col bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800/60 p-2 rounded-lg min-w-0">
-          <span className="text-[9px] font-semibold text-gray-450 dark:text-gray-550 uppercase select-none mb-0.5">
+          <span className="text-[9px] font-semibold text-gray-400 dark:text-gray-550 uppercase select-none mb-0.5">
             Steps Completed
           </span>
-          <span className="text-[11px] font-bold text-gray-755 dark:text-gray-200">
+          <span className="text-[11px] font-bold text-gray-700 dark:text-gray-200">
             {session.steps.length}
           </span>
         </div>

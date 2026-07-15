@@ -28,10 +28,10 @@ export default function AgentPanel({
   };
 
   const getStatusColorClass = () => {
-    if (!session) return "text-gray-400 dark:text-gray-550 bg-gray-100 dark:bg-gray-800";
-    if (isRunning) return "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/20";
-    if (session.status === "completed") return "text-emerald-700 dark:text-emerald-450 bg-emerald-50 dark:bg-emerald-950/20";
-    return "text-rose-700 dark:text-rose-455 bg-rose-50 dark:bg-rose-955/20";
+    if (!session) return "text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800";
+    if (isRunning) return "text-indigo-650 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/20";
+    if (session.status === "completed") return "text-emerald-705 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20";
+    return "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20";
   };
 
   const handleToggleCard = (index: number) => {
@@ -43,10 +43,10 @@ export default function AgentPanel({
 
   if (isCollapsed) {
     return (
-      <aside className="h-full flex flex-col bg-slate-50/50 dark:bg-gray-900/50 border-l border-gray-200 dark:border-gray-850 flex-shrink-0 w-[44px]">
-        <div className="flex items-center justify-center p-3 border-b border-gray-250/60 dark:border-gray-800/80 min-h-[53px]">
+      <aside className="h-full flex flex-col bg-slate-50/50 dark:bg-gray-900/50 border-l border-gray-200 dark:border-gray-800 flex-shrink-0 w-[44px]">
+        <div className="flex items-center justify-center p-3 border-b border-gray-200 dark:border-gray-800 min-h-[53px]">
           <button
-            className="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded hover:bg-gray-105 dark:hover:bg-gray-800 cursor-pointer"
+            className="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
             onClick={onToggleCollapse}
             title="Expand Panel"
           >
@@ -60,12 +60,12 @@ export default function AgentPanel({
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <polyline points="9 18 15 12 9 6" />
+              <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center py-6">
-          <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest vertical-rl select-none">
+        <div className="flex-1 flex flex-col items-center justify-center py-6 min-w-0">
+          <span className="text-[11px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest vertical-rl select-none leading-none whitespace-nowrap py-4">
             Agent Timeline
           </span>
         </div>
@@ -75,10 +75,10 @@ export default function AgentPanel({
 
   return (
     <aside 
-      className="h-full flex flex-col bg-slate-50/50 dark:bg-gray-900/50 border-l border-gray-200 dark:border-gray-850 flex-shrink-0 w-full min-w-0"
+      className="h-full flex flex-col bg-slate-50/50 dark:bg-gray-900/50 border-l border-gray-200 dark:border-gray-800 flex-shrink-0 w-full min-w-0"
       style={{ width: `${width}px` }}
     >
-      <div className="flex items-center justify-between p-3 border-b border-gray-250/60 dark:border-gray-800/80 min-h-[53px] flex-shrink-0">
+      <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-800 min-h-[53px] flex-shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold tracking-wider text-gray-400 dark:text-gray-500 uppercase select-none">
             Agent
@@ -89,7 +89,7 @@ export default function AgentPanel({
         </div>
 
         <button
-          className="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded hover:bg-gray-105 dark:hover:bg-gray-800 transition-all duration-200 cursor-pointer"
+          className="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 cursor-pointer"
           onClick={onToggleCollapse}
           title="Collapse Panel"
         >
@@ -113,7 +113,7 @@ export default function AgentPanel({
           <>
             <RequestOverview session={session} />
 
-            <div className="text-[9px] font-bold text-gray-400 dark:text-gray-505 uppercase tracking-wider select-none mb-1">
+            <div className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider select-none mb-1">
               Execution Timeline
             </div>
 
@@ -137,7 +137,7 @@ export default function AgentPanel({
           <div className="flex flex-col items-center justify-center py-16 text-center select-none text-gray-400">
             <span className="text-3xl mb-2">🤖</span>
             <p className="text-xs font-semibold">No active execution session</p>
-            <p className="text-[10px] text-gray-550 mt-1 max-w-[180px] leading-relaxed">
+            <p className="text-[10px] text-gray-500 mt-1 max-w-[180px] leading-relaxed">
               Submit a database query to launch the planner agent pipeline.
             </p>
           </div>

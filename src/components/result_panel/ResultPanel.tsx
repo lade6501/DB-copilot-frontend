@@ -9,6 +9,7 @@ import "./style.css";
 
 interface Props {
   session: QuerySession | null;
+  devMode?: boolean;
 }
 
 export function isAwaitingApproval(session: QuerySession | null): boolean {
@@ -23,7 +24,7 @@ export function isAwaitingApproval(session: QuerySession | null): boolean {
   return hasApproval && !isRejected && !isApproved && !hasExecuted;
 }
 
-export default function ResultPanel({ session }: Props) {
+export default function ResultPanel({ session, devMode = true }: Props) {
   const panelStyle = { borderLeft: "none", width: "100%", height: "100%" };
 
   if (!session) {
@@ -46,7 +47,7 @@ export default function ResultPanel({ session }: Props) {
             Query Awaiting Authorization
           </h3>
           
-          <p className="text-xs text-gray-505 dark:text-gray-400 leading-relaxed mb-5">
+          <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-5">
             This query requires administrative authorization before it can be executed. 
             An approval request has been successfully raised.
           </p>
@@ -55,13 +56,13 @@ export default function ResultPanel({ session }: Props) {
             {session.approvalId && (
               <div className="flex justify-between items-center gap-2">
                 <span className="text-gray-450 dark:text-gray-500 font-semibold uppercase text-[9px] tracking-wide">Request ID</span>
-                <span className="font-mono text-[10px] text-gray-655 dark:text-gray-300 select-all bg-white dark:bg-gray-900 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700/80">
+                <span className="font-mono text-[10px] text-gray-600 dark:text-gray-300 select-all bg-white dark:bg-gray-900 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700/80">
                   {session.approvalId}
                 </span>
               </div>
             )}
             <div className="flex justify-between items-center">
-              <span className="text-gray-450 dark:text-gray-550 font-semibold uppercase text-[9px] tracking-wide">Risk Assessment</span>
+              <span className="text-gray-450 dark:text-gray-500 font-semibold uppercase text-[9px] tracking-wide">Risk Assessment</span>
               <RiskBadge session={session} />
             </div>
           </div>
@@ -100,7 +101,7 @@ export default function ResultPanel({ session }: Props) {
       )}
 
       {["write", "update", "delete"].includes(session.result.action) && (
-        <CrudActionCard result={session.result} />
+        <CrudActionCard result={session.result} devMode={devMode} />
       )}
     </aside>
   );
